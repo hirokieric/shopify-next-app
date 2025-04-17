@@ -1,7 +1,7 @@
 import request from "graphql-request";
 import { type TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-const url = `shopify:admin/api/2024-10/graphql.json`;
+const url = `shopify:admin/api/2025-04/graphql.json`;
 
 export function useGraphQL<TResult, TVariables>(
   document: TypedDocumentNode<TResult, TVariables>,

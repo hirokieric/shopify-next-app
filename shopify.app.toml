@@ -1,33 +1,46 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "add7504331733e92252623482056ef16"
-name = "app next template"
-application_url = "https://federal-aside-admissions-festival.trycloudflare.com"
+client_id = "e5df25675e1cc9cd75a17f8d064235aa"
+application_url = "https://app.enprods.com"
 embedded = true
+name = "ARK TEST APP"
+handle = "arkproducts-test-app"
 
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "matts-tech-test.myshopify.com"
-include_config_on_deploy = true
+[webhooks]
+api_version = "2025-04"
+
+  [[webhooks.subscriptions]]
+  uri = "/api/gdpr/customers_data_request"
+  compliance_topics = [ "customers/data_request" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/api/gdpr/customers_redact"
+  compliance_topics = [ "customers/redact" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/api/gdpr/shop_redact"
+  compliance_topics = [ "shop/redact" ]
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_inventory,read_inventory_transfers,read_locations,read_products,write_inventory,write_inventory_transfers,write_locations,write_products"
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "https://app.enprods.com/auth/callback",
+  "https://app.enprods.com/auth/shopify/callback",
+  "https://app.enprods.com/api/auth/callback"
+]
+
+[pos]
+embedded = false
 
 [access.admin]
 direct_api_mode = "offline"
 embedded_app_direct_api_access = true
 
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
-use_legacy_install_flow = false
-
-[auth]
-redirect_urls = [
-  "https://federal-aside-admissions-festival.trycloudflare.com/auth/callback",
-  "https://federal-aside-admissions-festival.trycloudflare.com/auth/shopify/callback",
-  "https://federal-aside-admissions-festival.trycloudflare.com/api/auth/callback"
-]
-
-[webhooks]
-api_version = "2024-10"
-
-[pos]
-embedded = false
+[build]
+dev_store_url = "e-n-productions-app-test-store.myshopify.com"
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true

@@ -9,7 +9,8 @@
     "build": "shopify app build",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
-    "docker-dev": "docker compose up -d"
+    "docker-dev": "docker compose up -d",
+    "cloudflare": "cloudflared tunnel run"
   },
   "author": "ozzyonfire",
   "keywords": [
@@ -20,6 +21,6 @@
     "template"
   ],
   "dependencies": {
-    "prettier": "^3.2.5"
+    "prettier": "^3.5.3"
   }
 }

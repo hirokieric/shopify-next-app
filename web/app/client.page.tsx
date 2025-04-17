@@ -50,7 +50,7 @@ export default function Home() {
 
   return (
     <Page title="Home">
-      <div className="flex items-center justify-center gap-1 p-2 bg-slate-800 text-white rounded-lg mb-2 shadow-lg">
+      <div className="flex justify-center items-center gap-1 bg-slate-800 shadow-lg mb-2 p-2 rounded-lg text-white">
         <p className="font-medium text-[1rem]">
           We can also use tailwindcss in this project!
         </p>
