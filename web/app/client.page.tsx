@@ -1,9 +1,9 @@
 "use client";
 
 import { graphql } from "@/lib/gql";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { Button, LegacyCard as Card, Page, Text } from "@shopify/polaris";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { doServerAction } from "./actions";
 import { useGraphQL } from "./hooks/useGraphQL";
@@ -22,6 +22,7 @@ const GET_SHOP = graphql(`
 `);
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<Data | null>(null);
   const [serverActionResult, setServerActionResult] = useState<{
     status: "success" | "error";
@@ -34,17 +35,36 @@ export default function Home() {
     error: graphqlError,
   } = useGraphQL(GET_SHOP);
 
-  const app = useAppBridge();
-
   const handleGetAPIRequest = async () => {
+    console.log("------ DEBUG: API Request Start ------");
+    console.time("API Request Duration");
     try {
+      console.log("Making request to: /api/hello");
       // global fetch has tokens automatically added
       // https://shopify.dev/docs/api/app-bridge-library/apis/resource-fetching
       const response = await fetch("/api/hello");
+      console.log("Response Status:", response.status);
+
+      // Convert headers to a plain object safely
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+      console.log("Response Headers:", headers);
+
       const result = (await response.json()) as { data: Data };
+      console.log("API Response Data:", result);
       setData(result.data);
-    } catch (err) {
-      console.log(err);
+      console.log("------ DEBUG: API Request End ------");
+    } catch (err: any) {
+      console.error("------ DEBUG: API Request Error ------");
+      console.error("Error details:", err);
+      console.error("Error name:", err?.name || "Unknown");
+      console.error("Error message:", err?.message || "No message available");
+      console.error("Error stack:", err?.stack || "No stack trace available");
+      console.error("------ DEBUG: API Request Error End ------");
+    } finally {
+      console.timeEnd("API Request Duration");
     }
   };
 
@@ -80,9 +100,31 @@ export default function Home() {
         primaryFooterAction={{
           content: "Server action",
           onAction: async () => {
-            const token = await app.idToken();
-            const response = await doServerAction(token);
-            setServerActionResult(response);
+            console.log("------ DEBUG: Server Action Start ------");
+            console.time("Server Action Duration");
+            try {
+              // Server action will handle authentication internally
+              console.log("Calling doServerAction");
+              const response = await doServerAction("");
+              console.log("Server Action Response:", response);
+              setServerActionResult(response);
+              console.log("------ DEBUG: Server Action End ------");
+            } catch (err: any) {
+              console.error("------ DEBUG: Server Action Error ------");
+              console.error("Error details:", err);
+              console.error("Error name:", err?.name || "Unknown");
+              console.error(
+                "Error message:",
+                err?.message || "No message available",
+              );
+              console.error(
+                "Error stack:",
+                err?.stack || "No stack trace available",
+              );
+              console.error("------ DEBUG: Server Action Error End ------");
+            } finally {
+              console.timeEnd("Server Action Duration");
+            }
           },
         }}
       >
@@ -118,34 +160,118 @@ export default function Home() {
           automatically uses an authenticated graphql route, no need to add
           tokens.
         </Text>
-        <Button
-          onClick={async () => {
-            const res = await fetch("shopify:admin/api/graphql.json", {
-              method: "POST",
-              body: JSON.stringify({
-                query: /* GraphQL */ `
+        <div className="space-y-4">
+          <Button
+            onClick={async () => {
+              console.log("------ DEBUG: GraphQL API Request Start ------");
+              try {
+                console.log("Making request to: /api/graphql");
+                console.time("GraphQL Request Duration");
+
+                const query = /* GraphQL */ `
                   query {
                     shop {
                       name
                     }
                   }
-                `,
-              }),
-            });
-            const { data } = await res.json();
-            console.log("graphql response", data);
-          }}
-        >
-          GraphQL Query - Check the console for the response
-        </Button>
+                `;
+                console.log("Query:", query);
+
+                const res = await fetch("/api/graphql", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ query }),
+                });
+
+                console.log("Response Status:", res.status);
+
+                // Convert headers to a plain object safely
+                const headers: Record<string, string> = {};
+                res.headers.forEach((value, key) => {
+                  headers[key] = value;
+                });
+                console.log("Response Headers:", headers);
+
+                const responseData = await res.json();
+                console.log("GraphQL Response Data:", responseData);
+
+                if (responseData.errors) {
+                  console.error("GraphQL Errors:", responseData.errors);
+                }
+
+                console.timeEnd("GraphQL Request Duration");
+                console.log("------ DEBUG: GraphQL API Request End ------");
+              } catch (error: any) {
+                console.error("------ DEBUG: GraphQL API Request Error ------");
+                console.error("Error details:", error);
+                console.error("Error name:", error?.name || "Unknown");
+                console.error(
+                  "Error message:",
+                  error?.message || "No message available",
+                );
+                console.error(
+                  "Error stack:",
+                  error?.stack || "No stack trace available",
+                );
+                console.timeEnd("GraphQL Request Duration");
+                console.error(
+                  "------ DEBUG: GraphQL API Request Error End ------",
+                );
+              }
+            }}
+          >
+            GraphQL Query with Debug Logs
+          </Button>
+          <Text as="p" variant="bodySm" tone="subdued">
+            Check the browser console (F12 &gt; Console tab) to see detailed
+            debug logs
+          </Text>
+        </div>
       </Card>
 
-      <Card sectioned title="Shopify App Bridge">
+      <Card sectioned title="Shopify App Bridge Navigation">
         <Text as="p" variant="bodyMd">
-          Use Shopify App Bridge to interact with the Shopify admin. The request
-          uses offline session tokens. This uses Shopify App Bridge v4.
+          Use Shopify App Bridge to navigate within the embedded app context.
+          This preserves the embedded iframe and maintains proper navigation.
         </Text>
-        <Link href="/new">New page using next/link</Link>
+        <div className="space-y-4">
+          <Button
+            onClick={() => {
+              const host = searchParams.get("host");
+              const shop = searchParams.get("shop");
+              const url = `/new?host=${host}&shop=${shop}`;
+
+              // Use safer navigation method that works in embedded context
+              // This preserves the app context better than direct window.location
+              try {
+                // Use pushState to change URL and then manually navigate
+                window.history.pushState({}, "", url);
+                window.location.href = url;
+              } catch (error) {
+                // Fallback to direct navigation
+                window.location.href = url;
+              }
+            }}
+          >
+            New page using improved navigation
+          </Button>
+          <Button
+            onClick={() => {
+              const host = searchParams.get("host");
+              const shop = searchParams.get("shop");
+              window.location.href = `/new?host=${host}&shop=${shop}`;
+            }}
+          >
+            New page using direct navigation (breaks embedded context)
+          </Button>
+          <Text as="p" variant="bodySm" tone="subdued">
+            Compare the two navigation methods above. The App Bridge navigation
+            maintains the embedded context, while direct navigation breaks out
+            of it.
+          </Text>
+        </div>
       </Card>
     </Page>
   );

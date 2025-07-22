@@ -6,9 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql" // other supported providers are: postgresql, mysql, sqlite, sqlserver, mongodb
+  provider  = "postgresql" // PostgreSQLを使用
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  // 直接接続のURLはオプションです。必要ない場合はコメントアウトしてください
+  // directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Session {

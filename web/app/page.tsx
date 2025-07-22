@@ -5,10 +5,11 @@ export default async function Page({
   searchParams,
 }: {
   params: any;
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   // we can perform some checks to see if the app has been installed and that it is still valid
-  const { shop, host } = searchParams;
+  const awaitedSearchParams = await searchParams;
+  const { shop, host } = awaitedSearchParams;
   if (!shop || !host) {
     return <h1>Missing Shop and Host Parameters</h1>;
   }
