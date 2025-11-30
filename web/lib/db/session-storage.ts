@@ -1,5 +1,6 @@
 import { Session } from "@prisma/client";
 import { Session as ShopifySession } from "@shopify/shopify-api";
+import { SessionNotFoundError } from "@/lib/errors/session-errors";
 import prisma from "./prisma-connect";
 const apiKey = process.env.SHOPIFY_API_KEY || "";
 
@@ -129,11 +130,4 @@ function generateShopifySessionFromDB(session: Session) {
     isOnline: session.isOnline,
     expires: session.expires || undefined,
   });
-}
-
-export class SessionNotFoundError extends Error {
-  constructor() {
-    super("Session not found");
-    this.name = "SessionNotFoundError";
-  }
 }

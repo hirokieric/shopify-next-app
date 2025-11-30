@@ -10,6 +10,7 @@ export async function doServerAction(sessionIdToken: string): Promise<{
   data?: {
     shop: string;
   };
+  message?: string;
 }> {
   try {
     const {
@@ -23,9 +24,12 @@ export async function doServerAction(sessionIdToken: string): Promise<{
       },
     };
   } catch (error) {
-    console.log(error);
+    const errorMessage =
+      error instanceof Error ? error.message : "予期しないエラーが発生しました";
+    console.error("Server action error:", error);
     return {
       status: "error",
+      message: errorMessage,
     };
   }
 }
@@ -33,14 +37,24 @@ export async function doServerAction(sessionIdToken: string): Promise<{
 /**
  * Store the session (and access token) in the database
  */
-export async function storeToken(sessionToken: string) {
-  await handleSessionToken(sessionToken, false, true);
+export async function storeToken(sessionToken: string): Promise<void> {
+  try {
+    await handleSessionToken(sessionToken, false, true);
+  } catch (error) {
+    console.error("Error storing token:", error);
+    throw error;
+  }
 }
 
 /**
- * Register the webooks that we want setup.
+ * Register the webhooks that we want setup.
  */
-export async function doWebhookRegistration(sessionToken: string) {
-  const { session } = await handleSessionToken(sessionToken);
-  await registerWebhooks(session);
+export async function doWebhookRegistration(sessionToken: string): Promise<void> {
+  try {
+    const { session } = await handleSessionToken(sessionToken);
+    await registerWebhooks(session);
+  } catch (error) {
+    console.error("Error registering webhooks:", error);
+    throw error;
+  }
 }

@@ -1,11 +1,11 @@
 import Home from "./client.page";
 
-export default async function Page(
-  props: {
-    params: Promise<any>;
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+type PageProps = {
+  params: Promise<Record<string, never>>;
+  searchParams: Promise<{ shop?: string; host?: string }>;
+};
+
+export default async function Page(props: PageProps) {
   const searchParams = await props.searchParams;
   // we can perform some checks to see if the app has been installed and that it is still valid
   const { shop, host } = searchParams;

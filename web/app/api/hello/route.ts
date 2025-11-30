@@ -1,3 +1,4 @@
+import { handleApiError } from "@/lib/errors/api-error";
 import { verifyRequest } from "@/lib/shopify/verify";
 import { NextResponse } from "next/server";
 
@@ -13,15 +14,18 @@ type Data = {
 };
 
 export async function GET(req: Request) {
-  // session token is located in the request headers
-  const validSession = await verifyRequest(req, true); // could use middleware for this?
-  console.log("validSession", validSession);
+  try {
+    // session token is located in the request headers
+    await verifyRequest(req, true);
 
-  return NextResponse.json<APIResponse<Data>>({
-    status: "success",
-    data: {
-      name: "Luke Skywalker",
-      height: "172",
-    },
-  });
+    return NextResponse.json<APIResponse<Data>>({
+      status: "success",
+      data: {
+        name: "Luke Skywalker",
+        height: "172",
+      },
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
