@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "migrate": "prisma migrate dev",
     "postinstall": "prisma generate",
     "graphql-codegen": "graphql-codegen --config codegen.ts"

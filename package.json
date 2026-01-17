@@ -8,7 +8,9 @@
     "info": "shopify app info",
     "build": "shopify app build",
     "generate": "shopify app generate",
-    "deploy": "shopify app deploy"
+    "deploy": "shopify app deploy",
+    "tunnel": "cloudflared tunnel run shopify-dev",
+    "sync:shopify-app-toml": "node scripts/generate-shopify-app-toml.cjs"
   },
   "author": "ozzyonfire",
   "keywords": [
@@ -19,6 +21,8 @@
     "template"
   ],
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "dotenv": "^16.4.7",
     "prettier": "^3.8.0",
     "typescript": "^5.9.3"
   }

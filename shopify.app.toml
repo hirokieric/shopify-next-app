@@ -1,28 +1,28 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+# Avoid writing to toml directly. Use your .env file instead
 
-client_id = "add7504331733e92252623482056ef16"
-name = "app next template"
-application_url = "https://federal-aside-admissions-festival.trycloudflare.com"
+name = "ARK-CUSTOM-APP"
+client_id = "e5df25675e1cc9cd75a17f8d064235aa"
+application_url = "https://app.enprods.com"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = true
-dev_store_url = "matts-tech-test.myshopify.com"
+automatically_update_urls_on_dev = false
+dev_store_url = "e-n-productions-app-test-store.myshopify.com"
 
 [access.admin]
 direct_api_mode = "offline"
 embedded_app_direct_api_access = true
 
 [access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
+scopes = "read_products,write_products"
 use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://federal-aside-admissions-festival.trycloudflare.com/auth/callback",
-  "https://federal-aside-admissions-festival.trycloudflare.com/auth/shopify/callback",
-  "https://federal-aside-admissions-festival.trycloudflare.com/api/auth/callback"
+  "https://app.enprods.com/auth/callback",
+  "https://app.enprods.com/auth/shopify/callback",
+  "https://app.enprods.com/api/auth/callback"
 ]
 
 [webhooks]

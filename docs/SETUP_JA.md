@@ -231,6 +231,75 @@ HOST=https://your-app-url.ngrok.io
 
 ---
 
+## shopify.app.toml の生成
+
+`shopify.app.toml` ファイルは、ルートの `.env` ファイルから自動生成できます。これにより、環境変数を変更するだけで TOML ファイルを更新できます。
+
+### 必要な環境変数
+
+ルートの `.env` ファイルに以下の環境変数を設定してください：
+
+```bash
+# 必須項目
+SHOPIFY_APP_URL=https://your-app-url.trycloudflare.com
+APP_NAME=your-app-name
+SHOPIFY_API_KEY=your_api_key
+SHOPIFY_API_SCOPES=read_products,write_products
+SHOPIFY_API_VERSION=2025-10
+
+# オプション項目
+SHOPIFY_DEV_STORE_URL=your-dev-store.myshopify.com
+```
+
+**環境変数の説明:**
+
+- `SHOPIFY_APP_URL`: アプリのベースURL（末尾の `/` は自動的に削除されます）
+- `APP_NAME`: アプリ名
+- `SHOPIFY_API_KEY`: Shopify API キー（`client_id` として使用されます）
+- `SHOPIFY_API_SCOPES`: 必要なスコープ（カンマ区切り）
+- `SHOPIFY_API_VERSION`: Webhook の API バージョン（例: `2025-10`）
+- `SHOPIFY_DEV_STORE_URL`: 開発用ストアのURL（オプション）
+
+### TOML ファイルの生成
+
+以下のコマンドで `shopify.app.toml` を生成します：
+
+```bash
+pnpm run sync:shopify-app-toml
+```
+
+このコマンドは、ルートの `.env` ファイルを読み込み、`shopify.app.toml` を生成します。
+
+**オプション:**
+
+- `--env <path>`: `.env` ファイルのパスを指定（デフォルト: `./.env`）
+- `--out <path>`: 出力先のパスを指定（デフォルト: `./shopify.app.toml`）
+- `--check`: 生成結果と既存ファイルが一致するかチェックのみ（CI向け）
+
+**例:**
+
+```bash
+# デフォルトのパスを使用
+pnpm run sync:shopify-app-toml
+
+# カスタムパスを指定
+node scripts/generate-shopify-app-toml.cjs --env ./.env.local --out ./shopify.app.toml
+
+# CI でチェックのみ
+node scripts/generate-shopify-app-toml.cjs --check
+```
+
+**注意:**
+
+- `redirect_urls` は自動的に以下の3つのパスが生成されます：
+  - `/auth/callback`
+  - `/auth/shopify/callback`
+  - `/api/auth/callback`
+- `SHOPIFY_APP_URL` の末尾に `/` がある場合は自動的に削除されます。
+- 生成されたファイルには、直接編集しないよう警告コメントが含まれます。
+
+---
+
 ## データベースマイグレーション
 
 データベースのテーブルを作成するために、Prisma マイグレーションを実行します。
@@ -306,7 +375,12 @@ pnpm run graphql-codegen
 
 ### 概要
 
-この手順では、Cloudflare Tunnel（Zero Trust）を使って、ローカル開発環境（`localhost:3000` など）を固定のサブドメイン `dev.<ドメイン>` で外部公開します。Shopify CLIの `--tunnel-url` オプションと組み合わせて使用します。
+この手順では、Cloudflare Tunnel（Zero Trust）を使って、ローカル開発環境（`localhost:3000` など）を固定のサブドメイン（例: `app.enprods.com`）で外部公開します。
+
+**重要な注意点:**
+- `--tunnel-url` オプションは**使用しません**（このオプションは Shopify CLI が管理するトンネル用です）
+- Cloudflare Tunnel を使う場合は、`shopify.app.toml` の `application_url` を設定し、`automatically_update_urls_on_dev = false` にします
+- その後、通常の `shopify app dev` コマンドを実行します
 
 ---
 
@@ -347,11 +421,54 @@ cloudflared tunnel create shopify-dev
 
 ---
 
-### ステップ3: Public Hostname の設定（Cloudflare ダッシュボード）
+### ステップ3: ダッシュボード管理に移行する（ローカル設定の場合）
+
+既にローカル設定ファイルでトンネルを作成している場合、ダッシュボード管理に移行すると、設定をダッシュボードから直接管理できるようになります（推奨）。
+
+#### 移行前の確認
+
+移行には以下の条件を満たす必要があります：
+
+1. **トンネルが起動していて、ステータスが healthy である**
+   ```bash
+   # トンネルを起動していることを確認
+   cloudflared tunnel run shopify-dev
+   ```
+
+2. **YAML設定ファイルで設定されている**
+   - `~/.cloudflared/config.yml` または特定の設定ファイルが存在し、`ingress` ルールが定義されている
+
+3. **cloudflared のバージョンが 2022.03 以降**
+   ```bash
+   cloudflared --version
+   # 例: cloudflared version 2024.x.x (またはそれ以降)
+   ```
+
+#### 移行手順
 
 1. [Cloudflare Zero Trust ダッシュボード](https://one.dash.cloudflare.com/) にログイン
 2. **Networks** → **Tunnels** を選択
 3. 作成したトンネル（例: `shopify-dev`）をクリック
+4. 「Migrate shopify-dev」という画面が表示される場合、移行の条件を確認
+5. 条件を満たしている場合、**Start migration** ボタンをクリック
+
+**重要:** 移行は**不可逆的（irreversible）**です。移行後は、ダッシュボードから設定を管理することになります。ローカル設定ファイルの変更はダッシュボードに反映されません。
+
+移行後は、ダッシュボードから直接 Public Hostname を追加・編集・削除できるようになります。
+
+---
+
+### ステップ4: Public Hostname の設定
+
+トンネルの設定方法には、**ダッシュボード管理**と**ローカル設定ファイル**の2つの方法があります。
+
+#### 方法A: ダッシュボードで管理する（推奨・簡単）
+
+ダッシュボード管理に移行済み、または新規作成時:
+
+1. [Cloudflare Zero Trust ダッシュボード](https://one.dash.cloudflare.com/) にログイン
+2. **Networks** → **Tunnels** を選択
+3. トンネル（例: `shopify-dev`）をクリック
 4. **Public Hostnames** タブを選択
 5. **Add a public hostname** をクリック
 6. 以下のように設定:
@@ -362,11 +479,27 @@ cloudflared tunnel create shopify-dev
 
 これにより、`dev.<ドメイン>` が `localhost:3000` にルーティングされるようになります。DNSレコードはCloudflareが自動で作成します（通常、CNAMEレコード）。
 
+移行済みの場合、これ以降の設定はすべてダッシュボードから管理できます。
+
+#### 方法B: ローカル設定ファイルを使う（ダッシュボード管理に移行しない場合）
+
+ダッシュボード管理に移行せず、ローカル設定ファイルで管理し続ける場合。詳細設定が必要な場合にも使用できます。
+
+**注意:** ダッシュボード管理に移行済みの場合は、この方法は不要です。ダッシュボードから直接設定を管理してください。
+
 ---
 
-### ステップ4: トンネル設定ファイルの作成（オプション）
+### ステップ5: トンネル設定ファイルの作成（ローカル設定の場合・移行しない場合のみ）
 
-明示的に設定ファイルを使いたい場合、`~/.cloudflared/config.yml` を作成:
+ダッシュボード管理を使わず、ローカル設定ファイルで管理する場合:
+
+#### 設定ファイルの場所
+
+デフォルトでは `~/.cloudflared/config.yml` を参照します。または、トンネルごとに設定ファイルを作成することもできます。
+
+#### 設定ファイルの例
+
+`~/.cloudflared/config.yml` を作成（または既存のファイルを編集）:
 
 ```yaml
 tunnel: <TUNNEL_ID>  # ステップ2で取得したUUID
@@ -378,11 +511,30 @@ ingress:
   - service: http_status:404
 ```
 
-**注意:** 設定ファイルを使わない場合でも、ダッシュボードでPublic Hostnameを設定すれば動作します。
+`<TUNNEL_ID>` と `<ユーザー名>` を実際の値に置き換えてください。
+
+#### DNSレコードの手動設定（ローカル設定の場合）
+
+設定ファイルを使う場合、DNSレコードを手動で設定する必要があります：
+
+1. Cloudflare ダッシュボードの **DNS** セクションに移動
+2. レコードを追加:
+   - **Type**: `CNAME`
+   - **Name**: `dev`
+   - **Target**: `<TUNNEL_ID>.cfargotunnel.com`
+   - **Proxy status**: プロキシ有効（オレンジの雲アイコン）
+
+または、コマンドで設定:
+
+```bash
+cloudflared tunnel route dns shopify-dev dev.<ドメイン>
+```
+
+**注意:** ダッシュボード管理を使用する場合は、この手順は不要です。ダッシュボードが自動的にDNSレコードを作成します。
 
 ---
 
-### ステップ5: トンネルを起動
+### ステップ6: トンネルを起動
 
 ```bash
 # トンネル名を指定して起動
@@ -406,53 +558,91 @@ nohup cloudflared tunnel run shopify-dev > /dev/null 2>&1 &
 
 ---
 
-### ステップ6: shopify.app.toml の更新
+### ステップ7: shopify.app.toml の設定
 
-固定URLを使う場合は、`shopify.app.toml` を手動で更新します。
+固定URLを使う場合は、`shopify.app.toml` を更新する必要があります。以下の2つの方法があります：
+
+#### 方法A: 手動で編集する
 
 ```toml
 # shopify.app.toml
-application_url = "https://dev.<ドメイン>"
+application_url = "https://<あなたのドメイン>"
 
 [auth]
 redirect_urls = [
-  "https://dev.<ドメイン>/auth/callback",
-  "https://dev.<ドメイン>/auth/shopify/callback",
-  "https://dev.<ドメイン>/api/auth/callback"
+  "https://<あなたのドメイン>/auth/callback",
+  "https://<あなたのドメイン>/auth/shopify/callback",
+  "https://<あなたのドメイン>/api/auth/callback"
 ]
 
 [build]
-# 固定URLを使う場合は false に設定することを推奨
+# 固定URLを使う場合は false に設定する
 automatically_update_urls_on_dev = false
 ```
 
-`<ドメイン>` の部分を実際のドメインに置き換えてください（例: `dev.example.com`）。
+#### 方法B: 環境変数から自動生成する（推奨）
+
+ルートの `.env` ファイルに以下の環境変数を設定します：
+
+```bash
+SHOPIFY_APP_URL=https://<あなたのドメイン>
+APP_NAME=your-app-name
+SHOPIFY_API_KEY=your_api_key
+SHOPIFY_API_SCOPES=read_products,write_products
+SHOPIFY_API_VERSION=2025-10
+SHOPIFY_DEV_STORE_URL=your-dev-store.myshopify.com  # オプション
+```
+
+その後、以下のコマンドで `shopify.app.toml` を生成します：
+
+```bash
+pnpm run sync:shopify-app-toml
+```
+
+詳細は「[shopify.app.toml の生成](#shopifyapptoml-の生成)」セクションを参照してください。
 
 ---
 
-### ステップ7: Shopify CLI で開発サーバーを起動
+### ステップ8: Shopify CLI で開発サーバーを起動
 
-トンネルを起動した状態で、以下のコマンドで開発サーバーを起動します:
+**重要:** Cloudflare Tunnel を使う場合、`--tunnel-url` オプションは**使用しません**。このオプションは Shopify CLI が管理するトンネル用です。
 
+#### 手順（順序が重要）
+
+**ターミナル1: Cloudflare Tunnel を起動**
+```bash
+cloudflared tunnel run shopify-dev
+```
+
+トンネルが正常に起動すると、以下のようなメッセージが表示されます：
+```
++------------------------------------------------------------+
+|  Your quick Tunnel has been created!                       |
+|  Visit it at (it may take some time to be reachable):      |
+|  https://app.enprods.com                                   |
++------------------------------------------------------------+
+```
+
+**ターミナル2: Shopify CLI で開発サーバーを起動**
 ```bash
 # ルートディレクトリで実行
-shopify app dev --tunnel-url https://dev.<ドメイン> --no-update
+shopify app dev
 ```
 
-**オプションの説明:**
-- `--tunnel-url`: 使用するトンネルURLを指定（事前にトンネルが起動している必要がある）
-- `--no-update`: `shopify.app.toml` の `application_url` を使用（自動更新を無効化）
+**起動の順序:**
+1. **まず** Cloudflare Tunnel を起動（ターミナル1）
+2. **次に** Shopify CLI を起動（ターミナル2）
 
-または、`package.json` のスクリプトに追加することもできます:
+**重要なポイント:**
+- `shopify.app.toml` の `automatically_update_urls_on_dev = false` に設定されているため、Shopify CLI は `application_url` の値をそのまま使用します
+- `--tunnel-url` オプションは**使わない**でください（Cloudflare Tunnel には対応していません）
+- トンネルは**事前に起動しておく**必要があります
+- Next.js 開発サーバーが `localhost:3000` で起動していることを確認してください
 
-```json
-{
-  "scripts": {
-    "dev": "shopify app dev",
-    "dev:cloudflare": "shopify app dev --tunnel-url https://dev.<ドメイン> --no-update"
-  }
-}
-```
+**動作確認:**
+1. ターミナル1でトンネルが起動していることを確認
+2. ターミナル2で Next.js サーバーが起動していることを確認（`http://localhost:3000` にアクセス可能）
+3. ブラウザで `https://app.enprods.com` にアクセスして、アプリが表示されることを確認
 
 ---
 
@@ -472,17 +662,82 @@ Cloudflare Access（認証保護）を有効にしている場合、Webhookの�
 
 #### ポート番号の確認
 
-Next.jsのポートが3000以外の場合、Public HostnameのService URLを変更してください（例: `http://localhost:3001`）。
+**重要:** Next.js は固定ポート（3000）で起動する必要があります。Cloudflare Tunnel の Public Hostname の Service URL は `http://localhost:3000` に設定されているため、Next.js も同じポートで起動する必要があります。
+
+**設定方法:**
+- `web/package.json` の `dev` スクリプトに `-p 3000` を追加済みです
+- これにより、Next.js は常にポート 3000 で起動します
+
+**確認方法:**
+- `shopify app dev` を実行した際のログで、`Local: http://localhost:3000` と表示されることを確認してください
+- もし別のポート（例: `62490`）で起動している場合は、Cloudflare Tunnel の Public Hostname の Service URL をそのポートに変更するか、Next.js の設定を確認してください
 
 #### HTTPS について
 
 Cloudflareは自動的にHTTPS証明書を発行しますが、反映まで数分かかる場合があります。証明書が発行されるまで待つか、CloudflareダッシュボードのSSL/TLS設定を確認してください。
 
-#### トンネルが接続できない
+#### トンネルが接続できない / "refused to connect" エラー
 
-- トンネルが起動しているか確認（`cloudflared tunnel list`）
-- トンネルIDが正しいか確認
-- CloudflareダッシュボードでPublic Hostnameの設定を確認
+`app.enprods.com refused to connect` というエラーが表示される場合、以下の点を確認してください：
+
+**1. Cloudflare Tunnel が起動しているか確認**
+```bash
+# トンネルが起動しているか確認
+cloudflared tunnel list
+
+# または、別のターミナルでトンネルを起動
+cloudflared tunnel run shopify-dev
+```
+
+**2. Next.js 開発サーバーが起動しているか確認**
+- `shopify app dev` を実行しているターミナルで、Next.js サーバーが起動していることを確認
+- `http://localhost:3000` に直接アクセスして、Next.js アプリが表示されるか確認
+
+**3. Cloudflare ダッシュボードで Public Hostname の設定を確認**
+1. [Cloudflare Zero Trust ダッシュボード](https://one.dash.cloudflare.com/) にログイン
+2. **Networks** → **Tunnels** → トンネル名をクリック
+3. **Public Hostnames** タブを確認
+4. 以下の設定になっているか確認：
+   - **Subdomain**: `app`（または適切なサブドメイン）
+   - **Domain**: `enprods.com`
+   - **Service**: `http://localhost:3000`（Next.js のデフォルトポート）
+   - **Status**: Active（緑色）
+
+**4. ポート番号の確認**
+- Next.js が別のポート（例: `3001`）で起動している場合、Public Hostname の Service URL を `http://localhost:3001` に変更
+
+**5. トンネルのログを確認**
+```bash
+# トンネルを起動したターミナルで、エラーメッセージがないか確認
+cloudflared tunnel run shopify-dev
+```
+
+**6. 接続テスト**
+```bash
+# ローカルで Next.js が起動しているか確認
+curl http://localhost:3000
+
+# Cloudflare Tunnel 経由でアクセスできるか確認（トンネルが起動している状態で）
+curl https://app.enprods.com
+```
+
+**よくある原因:**
+- トンネルが起動していない
+- Next.js 開発サーバーが起動していない
+- Public Hostname の Service URL が間違っている（例: `https://localhost:3000` になっている）
+- ポート番号が一致していない
+
+#### ローカル設定のトンネルをダッシュボード管理に移行したい場合
+
+ダッシュボードでトンネルを開いた際に「Migrate shopify-dev」という画面が表示される場合、以下の条件を満たす必要があります:
+
+1. トンネルのステータスが **healthy** である
+2. トンネルが **YAML設定ファイル**で設定されている
+3. `cloudflared` のバージョンが **2022.03以降**である（`cloudflared --version` で確認）
+
+条件を満たしている場合は「Start migration」をクリックして移行できます。移行は**不可逆的**なので注意してください。
+
+移行後は、ダッシュボードから直接Public Hostnameを管理できるようになります。
 
 #### DNSの反映待ち
 
@@ -494,12 +749,23 @@ DNSレコードの反映には数分〜数時間かかる場合があります�
 
 固定サブドメインを使わず、デフォルトの自動生成URLに戻したい場合:
 
-```bash
-# 通常通り起動（トンネルオプションなし）
-pnpm run dev
-```
+1. `shopify.app.toml` の `automatically_update_urls_on_dev` を `true` に変更：
+   ```toml
+   [build]
+   automatically_update_urls_on_dev = true
+   ```
 
-または、`shopify.app.toml` の `automatically_update_urls_on_dev` を `true` に戻してください。
+2. 通常通り起動：
+   ```bash
+   pnpm run dev
+   ```
+
+または、環境変数から `shopify.app.toml` を再生成する場合：
+
+```bash
+# .env ファイルで SHOPIFY_APP_URL を削除またはコメントアウト
+# その後、shopify.app.toml を手動で編集して automatically_update_urls_on_dev = true に設定
+```
 
 ---
 
@@ -546,20 +812,23 @@ pnpm run dev
 
 ### 方法2: Cloudflare Tunnel で固定サブドメインを使う
 
-固定のサブドメイン（例: `dev.example.com`）を使いたい場合は、上記の「[Cloudflare Tunnel で固定サブドメインを使う（オプション）](#cloudflare-tunnel-で固定サブドメインを使うオプション)」セクションを参照してください。
+固定のサブドメイン（例: `app.enprods.com`）を使いたい場合は、上記の「[Cloudflare Tunnel で固定サブドメインを使う（オプション）](#cloudflare-tunnel-で固定サブドメインを使うオプション)」セクションを参照してください。
 
 **前提条件:**
 - Cloudflare Tunnel が起動している必要があります
-- `shopify.app.toml` を固定URL用に更新済みであること
+- `shopify.app.toml` の `application_url` が固定URLに設定されていること
+- `shopify.app.toml` の `automatically_update_urls_on_dev = false` に設定されていること
 
 **起動方法:**
 ```bash
-# トンネルを起動（別ターミナル）
+# ターミナル1: トンネルを起動
 cloudflared tunnel run shopify-dev
 
-# Shopify CLIで開発サーバーを起動（別ターミナル）
-shopify app dev --tunnel-url https://dev.<ドメイン> --no-update
+# ターミナル2: Shopify CLIで開発サーバーを起動
+shopify app dev
 ```
+
+**注意:** `--tunnel-url` オプションは**使用しません**。Cloudflare Tunnel を使う場合は、`shopify.app.toml` の `application_url` が使用されます。
 
 ---
 
@@ -692,24 +961,53 @@ Cloudflare Tunnel を使っている場合に発生する可能性のある問�
    ```bash
    cloudflared tunnel list
    ```
-2. `--tunnel-url` オプションで指定したURLが正しいか確認（`https://dev.<ドメイン>` 形式であること）
-3. `shopify.app.toml` の `application_url` と `redirect_urls` が一致しているか確認
+2. `shopify.app.toml` の `application_url` が正しいか確認
+3. `shopify.app.toml` の `automatically_update_urls_on_dev = false` に設定されているか確認
+4. `shopify.app.toml` の `application_url` と `redirect_urls` が一致しているか確認
 
 **解決方法:**
 ```bash
-# トンネルを再起動
+# トンネルを再起動（別ターミナル）
 cloudflared tunnel run shopify-dev
 
-# Shopify CLIを起動する際は、トンネルが起動している状態で実行
-shopify app dev --tunnel-url https://dev.<ドメイン> --no-update
+# Shopify CLIを起動（別ターミナル）
+# --tunnel-url オプションは使わない
+shopify app dev
 ```
 
 **DNSの反映待ち:**
 - DNSレコードの反映には数分〜数時間かかる場合があります
-- `dig dev.<ドメイン>` または `nslookup dev.<ドメイン>` でDNSの反映を確認してください
+- `dig <ドメイン>` または `nslookup <ドメイン>` でDNSの反映を確認してください
 
 **Cloudflare Access が有効な場合:**
 - Webhookの受信などで問題が発生する場合は、Cloudflare Accessを無効にするか、Webhookエンドポイントを例外に追加してください
+
+### 問題11: 拡張機能の `uid` エラーが発生する
+
+`shopify app dev` を実行した際に以下のエラーが表示される場合：
+
+```
+Your app has extensions which need to be assigned `uid` identifiers.
+```
+
+**原因:**
+- Shopify Partners ダッシュボードから移行したアプリで、拡張機能（extensions）に `uid` が割り当てられていない場合に発生します
+
+**解決方法:**
+1. 初回のみ、対話的にデプロイを実行して拡張機能に `uid` を割り当てます：
+   ```bash
+   shopify app deploy
+   ```
+   - `--force` オプションは**付けない**でください
+   - 対話的に拡張機能の `uid` をマッピングする画面が表示されます
+   - 各拡張機能に対して適切な `uid` を選択または作成してください
+
+2. デプロイが完了したら、通常通り開発サーバーを起動できます：
+   ```bash
+   shopify app dev
+   ```
+
+**注意:** このエラーは初回のみ発生します。一度 `uid` が割り当てられれば、以降は通常通り開発できます。
 
 ---
 
