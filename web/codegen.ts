@@ -2,7 +2,7 @@ import { ApiType, pluckConfig, preset } from "@shopify/api-codegen-preset";
 import { CodegenConfig } from "@graphql-codegen/cli";
 
 const config: CodegenConfig = {
-  schema: "https://shopify.dev/admin-graphql-direct-proxy/2024-10",
+  schema: "https://shopify.dev/admin-graphql-direct-proxy/2025-10",
   documents: [
     "./app/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",

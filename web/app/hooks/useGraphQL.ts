@@ -2,7 +2,7 @@ import request from "graphql-request";
 import { type TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { OperationDefinitionNode } from "graphql";
-const url = `shopify:admin/api/2024-10/graphql.json`;
+const url = `shopify:admin/api/2025-10/graphql.json`;
 
 /**
  * GraphQL ドキュメントから操作名を取得

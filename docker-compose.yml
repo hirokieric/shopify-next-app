@@ -1,9 +1,13 @@
 services:
   db:
-    image: postgres
+    # NOTE: Do not use `postgres:latest` here.
+    # The official postgres image moved to v18+ behavior which can break existing volumes created by older majors.
+    # Pin the major version to keep the dev DB volume compatible.
+    image: postgres:17
     restart: always
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: shopify_app
     ports:
       - 5432:5432
     volumes:
