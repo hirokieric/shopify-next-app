@@ -1,0 +1,237 @@
+# Cursor AI向け指示書（Shopify Next.js テンプレ最適化）
+このリポジトリは **Shopify埋め込みアプリ（Embedded App）** を、Next.js App Router + **App Bridge v4（Direct API / Token Exchange）** + Prisma + TanStack Query + GraphQL Codegen + Webhooks + CSP で構築するテンプレです。
+
+目的は「テンプレの標準フローを壊さずに機能追加する」ことです。迷ったら、下記の **責務マップ → 典型フロー → 用途別プレイブック** の順で判断してください。
+
+---
+
+## 重要：このテンプレの前提（絶対に守る）
+- **埋め込み要件**: Shopify Admin 内 iframe で動く。CSP（`frame-ancestors`）を安易に崩さない。
+- **Token Exchange 前提**: クライアントの Session Token（JWT）をサーバで検証し、Admin API 用アクセストークンを扱う。
+- **セッション永続化**: Prisma 経由でセッション（Shopifyセッション）を保存/参照する。
+- **型安全の基本方針**: 可能な限り Codegen と型に寄せる（GraphQL の生文字列乱立を避ける）。
+
+---
+
+## アーキテクチャマップ（入口と責務）
+**UI/Providers**
+- `web/app/layout.tsx`: ルートレイアウト。`<Providers>` を適用する入口。
+- `web/app/providers/providers.tsx`: `AppProvider` → `TanstackProvider` → `SessionProvider` を束ねる。
+
+**Token Exchange（Direct API / Token Exchange）**
+- `web/app/providers/session-provider.tsx`: `app.idToken()` 取得 → `storeToken` / `doWebhookRegistration` を呼ぶ。
+- `web/app/actions.ts`: Server Actions。`storeToken` / `doWebhookRegistration` 等を提供する。
+- `web/lib/shopify/verify.ts`: Token Exchange の中核。`handleSessionToken` / `tokenExchange` など。
+
+**DB / セッション永続化（Prisma）**
+- `web/lib/db/session-storage.ts`: Prisma を使ったセッション永続化の実体。
+- `web/lib/db/prisma-connect.ts`: Prisma接続ユーティリティ。
+
+**GraphQL（クライアント側の取得）**
+- `web/app/hooks/useGraphQL.ts`: TanStack Query + `graphql-request` を使った取得。基本のクエリ取得口。
+- `web/lib/gql/*` / `web/types/admin.generated.d.ts`: GraphQL Codegen 生成物（型・Document等）。
+- `web/codegen.ts` / `.graphqlrc.yml`: Codegen 設定。
+
+**GraphQL（サーバ側の取得）**
+- `web/lib/get-products.ts`: サーバ側で Admin API を叩く代表例（DBセッション → `shopify.clients.Graphql`）。
+
+**Webhooks**
+- `web/lib/shopify/register-webhooks.ts`: Webhook 登録（定義/登録の寄せ先）。
+- `web/app/api/webhooks/route.ts`: Webhook 受信エンドポイント（ハンドラ登録方針を維持）。
+
+**CSP**
+- `web/middleware.ts`: CSP（`frame-ancestors`）設定。例外ルールや `matcher` を安易に削らない。
+
+---
+
+## 典型フロー（このテンプレの“最短ルート”）
+### クライアントで Admin API を読む（推奨：型安全 + キャッシュ）
+1) UI（Server Component 優先）で必要な範囲だけ Client 化  
+2) `web/lib/gql` の `graphql(\`...\`)` で Document を作る（Codegen前提）  
+3) `useGraphQL`（`web/app/hooks/useGraphQL.ts`）で取得して表示  
+
+### サーバで Admin API を読む（推奨：秘匿/集約/重い処理）
+1) DB からセッション取得（`web/lib/db/session-storage.ts`）  
+2) `shopify.clients.Graphql` で呼ぶ（例：`web/lib/get-products.ts` の流れを踏襲）  
+3) UI へデータを渡す（RSC での取得を基本）  
+
+### 書き込み（mutation）を追加する
+- クライアントで行う場合: `useMutation` + `invalidateQueries` を基本にする  
+- クエリキーは「`shop`/`resource`/`id`/`params`」など意味のある階層にする（衝突/過剰無効化を避ける）  
+- サーバ側に寄せる場合: Server Action / Route Handler で実行し、クライアントは再検証を行う
+
+---
+
+## 実装ルール（迷った時の決め方）
+- **UIは原則 Server Component**。必要な最小範囲のみ `"use client"`。
+- **クライアントから Admin GraphQL** を叩くなら、基本は **`web/lib/gql` + `useGraphQL`**（型安全/キャッシュ/再利用）。
+- **サーバから Admin API** を叩くなら、基本は **`shopify.clients.Graphql` + DBセッション**（`web/lib/get-products.ts` を参照）。
+- **Token/Session 周り** は既存の Token Exchange フローを変更しない（`session-provider.tsx` → `actions.ts` → `verify.ts`）。
+
+---
+
+## テンプレの強みの使い方（具体ルール）
+### Token Exchange（Direct API / Token Exchange）
+- **正しい経路を崩さない**: `web/app/providers/session-provider.tsx`（`app.idToken()`）→ `web/app/actions.ts`（`storeToken`）→ `web/lib/shopify/verify.ts`（`handleSessionToken` / `tokenExchange`）の流れを維持する。
+- **勝手な保存先を増やさない**: Access Token を LocalStorage 等に保存しない。永続化は DB（`web/lib/db/session-storage.ts`）と既存の仕組みに寄せる。
+- **トークンの可視化禁止**: エラー調査でも token を console/log に出さない（伏せ字でも避ける）。
+
+### TanStack Query（`useGraphQL`）
+- **クエリキーを設計する**: `["shop", shop, "products", params]` のように意味のある階層にする（文字列ベタ/巨大オブジェクト直置きを避ける）。
+- **取得条件を明示する**: 必要な前提（shop、id等）が揃うまで `enabled` を使って抑制し、不要なリクエスト/401 を増やさない。
+- **書き込み後の整合性**: mutation 後は「影響範囲のキーだけ」`invalidateQueries`（全消しは禁止）。
+
+### GraphQL Codegen
+- **生文字列Queryを増やさない**: 可能な限り `web/lib/gql` の `graphql(\`...\`)` を入口にして型安全を維持する。
+- **クエリ変更＝Codegen再実行**: Query/Fragment を触ったら必ず `cd web && pnpm run graphql-codegen` を行い、生成物（`web/lib/gql/*`, `web/types/admin.generated.d.ts`）の差分もコミット対象にする。
+- **APIバージョン不整合を作らない**: バージョンを変えるなら、後述の「APIバージョン整合性」をまとめて更新する。
+
+### Webhooks / CSP
+- **Webhook受信の安全弁を維持**: `web/app/api/webhooks/route.ts` の「未登録なら `addHandlers()`」方針を崩さない（サーバレス対策）。
+- **CSPを崩さない**: `web/middleware.ts` の `frame-ancestors` や `matcher` を安易に削らない（埋め込みが壊れる）。
+
+---
+
+## 破壊禁止事項（セキュリティ / 埋め込み要件）
+- **トークン（Session Token / Access Token）をログ出力しない**。例外なく禁止。
+- `web/middleware.ts` の CSP（`frame-ancestors`）や `matcher` の例外ルールを安易に削らない。
+- Webhook はサーバーレス環境で「ハンドラ未登録」になり得るため、`web/app/api/webhooks/route.ts` の **「無ければ `addHandlers()`」方針を維持**する。
+
+---
+
+## APIバージョン整合性（最重要：落とし穴対策）
+Admin APIバージョンは **必ず同じ値** に揃える。変更する場合は一括で変更し、Codegen を再実行する。
+
+揃えるべき箇所:
+- `web/lib/shopify/initialize-context.ts` の `apiVersion`（例：`ApiVersion.October25`）
+- `shopify.app.toml` の `[webhooks].api_version`（例：`2025-10`）
+- `web/codegen.ts` の `schema`（`admin-graphql-direct-proxy/<ver>`）
+- `.graphqlrc.yml` の `schema`
+- `web/app/hooks/useGraphQL.ts` の `shopify:admin/api/<ver>/graphql.json`
+
+変更時の手順:
+- `cd web && pnpm run graphql-codegen`（生成物更新が必須）
+
+---
+
+## 開発フロー（提案すべきコマンド順）
+- DB起動: `docker compose up -d`
+- 初回/スキーマ変更時: `cd web && pnpm run migrate`
+- GraphQLクエリ追加/変更時: `cd web && pnpm run graphql-codegen`
+- 開発起動: `pnpm run dev`
+
+---
+
+## 多言語対応（i18n）ガイド（採用方法とベストプラクティス）
+**方針（推奨）**: App Router で `app/[locale]/...` の **localeルーティング**を採用し、UI文言は翻訳辞書（JSON）へ集約する。埋め込みアプリ内のUIは、Shopify Admin の言語に寄せて初期localeを決め、URLや永続ストレージで固定できるようにする。
+
+Polaris:
+- `web/app/providers/providers.tsx` の `AppProvider i18n={translations}` を **localeに応じて切替**できる形にする（例: `@shopify/polaris/locales/ja.json` 等）。
+- 全言語の静的import乱立は避ける（バンドル肥大化の回避）。
+
+アプリ文言:
+- ハードコードを避け、`t("key")` 形式に統一。
+- 翻訳キー命名規則（例：`page.home.title`）とフォールバック（既定：`en`）を定める。
+
+locale決定:
+- 可能なら「Shopify Admin の言語（App Bridgeから得られる情報）」→ だめならURL（`[locale]`）→ 最後に `Accept-Language` の順。
+- 埋め込み遷移でlocaleが落ちないよう、リンク生成で locale を保持する。
+
+Server/Client:
+- Server Component で辞書読み込み/メッセージ選択を行い、Client Component には必要最小限の翻訳関数/メッセージのみ渡す。
+
+追加手順（運用）:
+- 既定言語にキー追加 → 他言語にもキー枠だけ追加（未訳可）→ 型/ビルドで欠落検知。
+
+---
+
+## 用途別プレイブック（代表ケース）
+### 1) 新規ページを追加したい
+- 置き場所: `web/app/.../page.tsx`（原則 Server Component）
+- Client が必要な時のみ `"use client"` を最小範囲に限定
+- データ取得:
+  - クライアント取得: `web/app/hooks/useGraphQL.ts`
+  - サーバ取得: `web/lib/get-products.ts` を参考に `shopify.clients.Graphql`
+
+### 2) Admin API をクライアントで読む（read）
+- `web/lib/gql` に Query を追加（`graphql(\`...\`)` を使う）
+- `cd web && pnpm run graphql-codegen`
+- `useGraphQL` で取得し、クエリキーを設計してキャッシュを活用
+
+### 3) Admin API をクライアントで書く（write / mutation）
+- `useMutation` + `invalidateQueries` を基本
+- 重要: 影響するクエリキーを過不足なく無効化（全消し・乱暴なinvalidateは禁止）
+- 可能なら Server Action / Route Handler に寄せて秘匿/検証も行う
+
+### 4) Webhook を追加したい
+- 登録定義: `web/lib/shopify/register-webhooks.ts` に追加
+- 受信: `web/app/api/webhooks/route.ts` の既存方針（必要なら `addHandlers()`）を維持
+- `shopify.app.toml` の Webhook api_version も含め、APIバージョン整合性を必ずチェック
+
+### 5) DBモデルを追加/変更したい（Prisma）
+- `web/prisma/schema.prisma` を変更
+- `cd web && pnpm run migrate`
+- 影響範囲: セッション永続化や参照ロジック（`web/lib/db/*`）を点検
+- マイグレーション/生成物の差分がPRに含まれることを前提に作業する
+
+---
+
+## 実装時チェックリスト（毎回）
+- 追加機能を分類: 「UIのみ / Admin API read / Admin API write / Webhook / DB変更」
+- 触るべきファイル候補を列挙し、既存フロー（Token Exchange/DB/CSP/Webhooks）を壊さない
+- Prismaスキーマ変更時: migrate/影響範囲確認
+- GraphQL変更時: `pnpm run graphql-codegen` を実行し、生成物更新を含める
+
+---
+
+## 運用テンプレ（そのまま使える規約）
+### TanStack Query：クエリキー規約（推奨）
+目的は「衝突しない」「invalidateが過不足なくできる」「ページを跨いで再利用できる」こと。
+
+- **基本形**: `["shop", shop, "<resource>", "<scope>", { ...params }]`
+- **IDがある場合**: `["shop", shop, "<resource>", "byId", id]`
+- **一覧**: `["shop", shop, "<resource>", "list", { ...filters, ...pagination }]`
+- **関連（例：商品→バリアント）**: `["shop", shop, "products", "byId", productId, "variants", "list", { ... }]`
+
+invalidate方針:
+- mutation 後は **影響する範囲のキーだけ** `invalidateQueries`（「全部消す」は禁止）。
+- 迷ったら「byId を優先して無効化 → 次に list」を最小限で行う。
+
+### i18n：推奨ディレクトリ/責務（雛形）
+このテンプレでは「辞書の読み込み/locale決定は Server に寄せ、Client には最小限を渡す」を優先する。
+
+推奨配置（例）:
+- `web/app/[locale]/layout.tsx`: locale 入口。辞書ロード/初期locale確定（Server）
+- `web/app/i18n/`: i18nユーティリティ（Server用の辞書ロード、キー型、fallback）
+- `web/app/messages/`: 翻訳辞書（例：`en.json`, `ja.json`）
+- `web/app/providers/providers.tsx`: Polaris の `AppProvider i18n={...}` を locale に応じて切替（Client）
+
+最低限の責務分離:
+- **Server**: locale決定（URL優先）・辞書ロード・必要なメッセージだけを props で渡す
+- **Client**: Polaris i18n の選択・UIでの `t("...")` 呼び出し（辞書全量を持ち回らない）
+
+locale決定ルール（再掲/運用優先度）:
+- まずURL（`[locale]`）を正とする（埋め込み遷移で落ちない）
+- 次に永続ストレージ（必要なら）
+- 最後に `Accept-Language`（補助）
+
+Polaris i18n の注意:
+- locale JSON の import は **必要分だけ**（全言語の静的import乱立は避ける）
+- 切替は `providers.tsx` に集約し、ページ側に散らさない
+
+---
+
+## よくある失敗と回避策（このテンプレ特有）
+- **CSPが原因で埋め込みが真っ白**: `web/middleware.ts` の `frame-ancestors` / `matcher` 変更が原因になりやすい。まず差分を疑い、例外追加は最小限にする。
+- **401/403が増える（クライアントGraphQL）**: `enabled` を使わずに前提が揃う前に叩いているケースが多い。`useGraphQL` の呼び出し条件を必ず制御する。
+- **Token Exchange フローが二重化/分岐して破綻**: `session-provider.tsx` → `actions.ts` → `verify.ts` 以外の独自ルートを増やさない（特に Client 側で access token を保持しない）。
+- **Codegenが古くて型がズレる**: Query/Fragment を触ったのに `pnpm run graphql-codegen` をしていない。生成物も差分に含める。
+- **Admin APIバージョン不整合で突然壊れる**: バージョンは「後述の5点セット」を一括更新し、Codegen 再実行までを必ずセットで行う。
+- **Webhookが環境によって受けたり受けなかったり**: サーバレスで「ハンドラ未登録」が起きる。`web/app/api/webhooks/route.ts` の `addHandlers()` 方針を維持する。
+- **Server/Client境界が崩れてバンドル肥大/ビルドエラー**: RSCに `window`/App Bridge/Polaris を持ち込まない。`"use client"` は最小化し、Providers 付近に寄せる。
+
+参照ドキュメント（このリポジトリ内）:
+- `docs/SETUP_JA.md`
+- `docs/TEMPLATE_SPEC_JA.md`
+- `docs/TEMPLATE_FEATURES_JA.md`
+
