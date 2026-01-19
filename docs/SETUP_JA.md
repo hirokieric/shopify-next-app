@@ -1041,6 +1041,102 @@ pnpm run migrate
 
 **A:** [README_JA.md](./README_JA.md) の「デプロイ」セクションを参照してください。
 
+### Q: トップページのデモ表示（サンプルデータ）を削除したい
+
+**A:** トップページに表示されるデモコンテンツは、データベースのサンプルデータではなく、テンプレートの固定レスポンスやサンプルUIです。以下の手順で削除または置き換えできます。
+
+#### デモ表示の正体
+
+このテンプレートのトップページには、以下のようなデモ表示が含まれています：
+
+1. **固定APIレスポンス**: `/api/hello` エンドポイントが固定値（例: "Luke Skywalker"）を返す
+2. **サンプルUIカード**: Next.js API Routes、React Server Actions、Tanstack Query などの使用例を示すカード
+3. **Shopify GraphQL クエリ例**: ストア名（`shop.name`）を取得して表示する例
+
+**重要:** データベース（Prisma）にはサンプルデータの投入処理はありません。データベースに保存されるのは、アプリのインストール時に作成されるセッション情報（`Session`、`OnlineAccessInfo`、`AssociatedUser`）のみです。
+
+#### デモ表示の削除方法
+
+##### 1. 固定APIレスポンスの削除
+
+`web/app/api/hello/route.ts` ファイルを編集または削除します。
+
+**方法A: ルートを削除する（推奨）**
+
+```bash
+# ファイルを削除
+rm web/app/api/hello/route.ts
+```
+
+その後、`web/app/client.page.tsx` から `/api/hello` を呼び出している部分を削除します。
+
+**方法B: 本番用のAPIに置き換える**
+
+`web/app/api/hello/route.ts` の固定レスポンス部分を、実際のビジネスロジックに置き換えます：
+
+```typescript
+// 固定レスポンスを削除し、実際のデータを返すように変更
+export async function GET(req: Request) {
+  try {
+    await verifyRequest(req, true);
+    // 実際のデータ取得処理を実装
+    return NextResponse.json<APIResponse<Data>>({
+      status: "success",
+      data: {
+        // 実際のデータ
+      },
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+```
+
+##### 2. トップページのサンプルUIカードの削除
+
+`web/app/client.page.tsx` を編集し、不要なサンプルカードを削除します。
+
+**削除または置き換えるカード:**
+
+- `NextJs API Routes` カード（`/api/hello` を呼び出す例）
+- `React server actions` カード（サーバーアクションの例）
+- `Use Tanstack Query to query Shopify GraphQL` カード（GraphQL クエリの例）
+- `Shopify App Bridge` カード（App Bridge の使用例）
+
+**例: カードを削除する場合**
+
+```typescript
+// web/app/client.page.tsx
+export default function Home() {
+  // 不要な state や関数を削除
+  // const [data, setData] = useState<Data | null>(null);
+  // const handleGetAPIRequest = async () => { ... };
+
+  return (
+    <Page title="Home">
+      {/* サンプルカードを削除し、実際のアプリコンテンツに置き換え */}
+      <Card sectioned title="ダッシュボード">
+        <Text as="p" variant="bodyMd">
+          ようこそ、Shopify アプリへ
+        </Text>
+      </Card>
+    </Page>
+  );
+}
+```
+
+##### 3. データベースのセッションデータを削除したい場合
+
+デモ表示とは別に、データベースに保存されているセッション情報（アプリのインストール情報）を削除したい場合は、以下のコマンドでデータベースをリセットできます：
+
+```bash
+cd web
+npx prisma migrate reset
+pnpm run migrate
+```
+
+**注意:** このコマンドはデータベースのすべてのデータを削除します。開発環境でのみ使用してください。
+
 ---
 
 ## サポート
