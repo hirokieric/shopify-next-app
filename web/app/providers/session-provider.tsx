@@ -14,14 +14,14 @@ export default function SessionProvider({
     app.idToken().then((token) => {
       storeToken(token)
         .then(() => {
-          console.log("Token stored");
+          console.info("Token stored");
         })
         .catch((error) => {
           console.error("Error storing token", error);
         });
       doWebhookRegistration(token)
         .then(() => {
-          console.log("Webhook registered");
+          console.info("Webhook registered");
         })
         .catch((error) => {
           console.error("Error registering webhook", error);

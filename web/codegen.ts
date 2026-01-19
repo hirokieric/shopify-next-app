@@ -1,4 +1,4 @@
-import { ApiType, pluckConfig, preset } from "@shopify/api-codegen-preset";
+import { ApiType, preset } from "@shopify/api-codegen-preset";
 import { CodegenConfig } from "@graphql-codegen/cli";
 
 const config: CodegenConfig = {

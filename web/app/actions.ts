@@ -49,7 +49,9 @@ export async function storeToken(sessionToken: string): Promise<void> {
 /**
  * Register the webhooks that we want setup.
  */
-export async function doWebhookRegistration(sessionToken: string): Promise<void> {
+export async function doWebhookRegistration(
+  sessionToken: string,
+): Promise<void> {
   try {
     const { session } = await handleSessionToken(sessionToken);
     await registerWebhooks(session);

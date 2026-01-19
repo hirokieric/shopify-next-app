@@ -67,9 +67,7 @@ export function handleApiError(error: unknown): NextResponse<APIErrorResponse> {
 
   // 本番環境では詳細なエラー情報を隠す
   const isProduction = process.env.NODE_ENV === "production";
-  const message = isProduction
-    ? "サーバーエラーが発生しました"
-    : errorMessage;
+  const message = isProduction ? "サーバーエラーが発生しました" : errorMessage;
 
   // エラーログを記録（本番環境でも）
   console.error("API Error:", error);
@@ -83,4 +81,3 @@ export function handleApiError(error: unknown): NextResponse<APIErrorResponse> {
     { status: 500 },
   );
 }
-

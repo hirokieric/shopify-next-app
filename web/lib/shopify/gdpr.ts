@@ -13,7 +13,7 @@ export function setupGDPRWebHooks(path: string) {
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: path,
       callback: async (topic, shop, body) => {
-        const payload = JSON.parse(body);
+        const _payload = JSON.parse(body);
         // Payload has the following shape:
         // {
         //   "shop_id": 954889,
@@ -38,7 +38,7 @@ export function setupGDPRWebHooks(path: string) {
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: path,
       callback: async (topic, shop, body) => {
-        const payload = JSON.parse(body);
+        const _payload = JSON.parse(body);
         // Payload has the following shape:
         // {
         //   "shop_id": 954889,
@@ -60,7 +60,7 @@ export function setupGDPRWebHooks(path: string) {
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: path,
       callback: async (topic, shop, body) => {
-        const payload = JSON.parse(body);
+        const _payload = JSON.parse(body);
         // Payload has the following shape:
         // {
         //   "shop_id": 954889,

@@ -16,4 +16,3 @@ declare namespace NodeJS {
     NEXT_PUBLIC_SHOPIFY_API_KEY?: string;
   }
 }
-

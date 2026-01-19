@@ -63,6 +63,9 @@ importers:
         specifier: ^19.2.0
         version: 19.2.3(react@19.2.3)
     devDependencies:
+      '@eslint/eslintrc':
+        specifier: ^3.3.1
+        version: 3.3.3
       '@tailwindcss/postcss':
         specifier: ^4.1.14
         version: 4.1.18
@@ -75,6 +78,12 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.1
         version: 19.2.3(@types/react@19.2.7)
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8.26.0
+        version: 8.49.0(@typescript-eslint/parser@8.49.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^8.26.0
+        version: 8.49.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
       eslint:
         specifier: ^9.37.0
         version: 9.39.2(jiti@2.6.1)
@@ -96,6 +105,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.14
         version: 4.1.18
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
 packages:
 

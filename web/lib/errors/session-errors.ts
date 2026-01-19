@@ -37,4 +37,3 @@ export class ExpiredTokenError extends Error {
     this.isOnline = isOnline;
   }
 }
-

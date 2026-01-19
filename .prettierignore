@@ -1,0 +1,20 @@
+node_modules
+.next
+dist
+coverage
+.turbo
+
+# env
+.env
+web/.env
+
+# build output
+web/.next
+web/dist
+
+# prisma
+web/prisma/migrations
+
+# generated
+web/types/admin.generated.d.ts
+

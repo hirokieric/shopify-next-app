@@ -44,7 +44,7 @@ export default function Home() {
       const result = (await response.json()) as { data: Data };
       setData(result.data);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -133,7 +133,7 @@ export default function Home() {
               }),
             });
             const { data } = await res.json();
-            console.log("graphql response", data);
+            console.info("graphql response", data);
           }}
         >
           GraphQL Query - Check the console for the response

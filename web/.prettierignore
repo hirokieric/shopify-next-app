@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+coverage
+.turbo
+
+# env
+.env
+
+# prisma
+prisma/migrations
+
+# generated
+types/admin.generated.d.ts
+

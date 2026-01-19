@@ -1,6 +1,6 @@
 /* eslint-disable */
-import * as types from './graphql';
-import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+import * as types from "./graphql";
+import { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 
 /**
  * Map of all GraphQL operations in the project.
@@ -14,12 +14,14 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query getShop {\n    shop {\n      name\n    }\n  }\n": typeof types.GetShopDocument,
-    "\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n": typeof types.GetProductsDocument,
+  "\n  query getShop {\n    shop {\n      name\n    }\n  }\n": typeof types.GetShopDocument;
+  "\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n": typeof types.GetProductsDocument;
 };
 const documents: Documents = {
-    "\n  query getShop {\n    shop {\n      name\n    }\n  }\n": types.GetShopDocument,
-    "\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n": types.GetProductsDocument,
+  "\n  query getShop {\n    shop {\n      name\n    }\n  }\n":
+    types.GetShopDocument,
+  "\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n":
+    types.GetProductsDocument,
 };
 
 /**
@@ -39,14 +41,19 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query getShop {\n    shop {\n      name\n    }\n  }\n"): (typeof documents)["\n  query getShop {\n    shop {\n      name\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query getShop {\n    shop {\n      name\n    }\n  }\n",
+): (typeof documents)["\n  query getShop {\n    shop {\n      name\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n"): (typeof documents)["\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query getProducts($first: Int!) {\n    products(first: $first) {\n      nodes {\n        id\n        title\n        tags\n      }\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
 }
 
-export type DocumentType<TDocumentNode extends DocumentNode<any, any>> = TDocumentNode extends DocumentNode<  infer TType,  any>  ? TType  : never;
+export type DocumentType<TDocumentNode extends DocumentNode<any, any>> =
+  TDocumentNode extends DocumentNode<infer TType, any> ? TType : never;

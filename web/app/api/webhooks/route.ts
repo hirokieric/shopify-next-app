@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     // Seems like there is some weird behaviour where the shopify api doesn't have the handlers registered - possibly due to some serverless behaviour
     const handlers = shopify.webhooks.getHandlers(topic);
     if (handlers.length === 0) {
-      console.log(`No handlers found for topic: ${topic}`);
+      console.info(`No handlers found for topic: ${topic}`);
       addHandlers();
     }
 
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       rawRequest: req,
     });
 
-    console.log(`Webhook processed successfully for topic: ${topic}`);
+    console.info(`Webhook processed successfully for topic: ${topic}`);
     return new Response(null, { status: 200 });
   } catch (error) {
     // Webhook のエラーをログに記録

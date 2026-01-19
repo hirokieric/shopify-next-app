@@ -48,7 +48,7 @@ export async function storeSession(session: ShopifySession) {
     });
 
     const { associated_user } = session.onlineAccessInfo;
-    const associatedUser = await prisma.associatedUser.upsert({
+    await prisma.associatedUser.upsert({
       where: { onlineAccessInfoId: onlineAccessInfo.id },
       update: {
         firstName: associated_user.first_name,
