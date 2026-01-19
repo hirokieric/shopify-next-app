@@ -28,7 +28,7 @@
   ],
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.6.1",
     "prettier": "^3.8.0",
     "typescript": "^5.9.3"
   }
