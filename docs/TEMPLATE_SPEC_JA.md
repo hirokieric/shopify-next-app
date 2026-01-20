@@ -573,13 +573,10 @@ export function middleware(request: NextRequest) {
 
 ### 環境変数
 
-**ルート `.env`（Docker Compose 用）:**
+**ルート `.env`（Docker Compose / Prisma / Next.js 用）:**
 ```bash
 POSTGRES_PASSWORD=your_password
-```
 
-**web/.env（Next.js / Prisma 用）:**
-```bash
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_app?schema=public"
 DIRECT_DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_app?schema=public"
 ```
@@ -626,11 +623,13 @@ DIRECT_DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_
 
 ## よくある落とし穴
 
-### 1. `web/.env` の必要性
+### 1. `web/.env` の必要性（旧）
 
-**問題:** Prisma のコマンド（`migrate` など）は Shopify CLI の環境変数注入とは独立に実行されるため、`DATABASE_URL` は `web/.env` に設定する必要がある。
+**問題:** Prisma のコマンド（`migrate` など）は Shopify CLI の環境変数注入とは独立に実行されるため、`DATABASE_URL` が未設定になりやすい。
 
-**解決策:** `web/.env` に `DATABASE_URL` と `DIRECT_DATABASE_URL` を設定する。
+**解決策（推奨）:** ルート `.env` に `DATABASE_URL` と `DIRECT_DATABASE_URL` を設定する（`web/` からも参照する）。
+
+**補足:** 互換のため `web/.env` を置く運用も可能（フォールバック）。
 
 ### 2. Webhook ハンドラが登録されていない
 
@@ -694,7 +693,7 @@ DIRECT_DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_
 - CSP によるセキュリティ確保
 
 **開発時の注意点:**
-- `web/.env` にデータベース接続文字列を設定する
+- ルート `.env` にデータベース接続文字列（`DATABASE_URL`）を設定する
 - GraphQL クエリを追加したら型生成を実行する
 - Webhook ハンドラはサーバーレス環境で再登録が必要な場合がある
 

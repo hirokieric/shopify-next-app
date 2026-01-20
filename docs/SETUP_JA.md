@@ -127,26 +127,23 @@ Docker を使用すると、PostgreSQL データベースを簡単にローカ�
 
 #### ステップ1: 環境変数ファイルの作成
 
-このプロジェクトでは、用途が異なるため **ルートと `web/` の両方に `.env` が必要**です：
+このプロジェクトでは **ルートの `.env` 1つ**で管理できます（推奨）：
 
-- **ルートの `.env`**: `docker compose` が参照（例: `POSTGRES_PASSWORD`）
-- **`web/.env`**: Prisma / Next.js（`cd web` で実行するコマンド）が参照（例: `DATABASE_URL`）
+- **ルートの `.env`**: `docker compose` / Prisma / Next.js が参照（例: `POSTGRES_PASSWORD`, `DATABASE_URL`）
 
 ```bash
-# ルート（Docker Compose 用）
+# ルート（Docker Compose / Prisma / Next.js 用）
 cat > .env <<'EOF'
 # docker-compose.yml が参照します
 POSTGRES_PASSWORD=your_password
-EOF
 
-# web（Prisma / Next.js 用）
-cat > web/.env <<'EOF'
+# Prisma / Next.js が参照します（`web/` からもルート `.env` を読む想定）
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_app?schema=public"
 DIRECT_DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_app?schema=public"
 EOF
 ```
 
-**補足:** 1つの `.env` を使い回したい場合は、macOS/Linux ではシンボリックリンクも使えます（必要な変数がすべて入っている前提）:
+**補足:** 互換のため `web/.env` を置く運用も可能です（フォールバック）。macOS/Linux ならシンボリックリンクでも構いません：
 
 ```bash
 ln -s ../.env web/.env
@@ -169,13 +166,11 @@ docker ps
 
 #### ステップ3: データベース接続文字列の設定
 
-`.env`（ルート）と `web/.env` の両方を開き、以下のように設定します：
+ルート `.env` を開き、以下のように設定します：
 
 ```bash
-# ルート .env（docker compose が参照）
+# ルート .env（docker compose / Prisma / Next.js が参照）
 POSTGRES_PASSWORD=your_password
-
-# web/.env（Prisma / Next.js が参照）
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_app?schema=public"
 DIRECT_DATABASE_URL="postgresql://postgres:your_password@localhost:5432/shopify_app?schema=public"
 ```
@@ -198,12 +193,14 @@ DIRECT_DATABASE_URL="postgresql://user:password@host:5432/database_name?schema=p
 
 ### 1. 環境変数ファイルの確認
 
-`.env`（ルート）と `web/.env` が存在することを確認します。
+ルートの `.env` が存在することを確認します。
 
 ```bash
 # ファイルが存在するか確認
-ls -la .env web/.env
+ls -la .env
 ```
+
+（互換のため `web/.env` を置いている場合は、追加で `ls -la web/.env` も確認してください）
 
 存在しない場合は、上記の手順に従って作成してください。
 
@@ -216,11 +213,11 @@ ls -la .env web/.env
 - `SCOPES`
 - `HOST`
 
-**重要:** Prisma のコマンド（例: `cd web && pnpm run migrate`）は Shopify CLI の注入とは独立に実行されるため、DB 接続（`DATABASE_URL` など）は基本的に **`web/.env` に入れておく**のが安全です。
+**重要:** Prisma のコマンド（例: `cd web && pnpm run migrate`）は Shopify CLI の注入とは独立に実行されるため、DB 接続（`DATABASE_URL` など）は **ルート `.env` に入れておく**のが安全です（`web/` からも参照します）。
 
 **手動で設定する場合:**
 
-必要に応じて（Shopify CLI を使わず `web/` 単体で起動する場合など）、`web/.env` に Shopify Partners ダッシュボードから取得した値を設定します：
+必要に応じて（Shopify CLI を使わず `web/` 単体で起動する場合など）、ルート `.env` に Shopify Partners ダッシュボードから取得した値を設定します：
 
 ```bash
 SHOPIFY_API_KEY=your_api_key
