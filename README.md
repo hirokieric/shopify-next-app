@@ -12,8 +12,8 @@ the app router and server components.
 - **Tanstack Query**: For interacting with the Shopify GraphQL API.
 - **App Bridge v4**: For authenticating API requests in the frontend.
 - **Shopify API library**: For managing OAuth on the serverless backend.
-- **Polaris React**: For building high quality, consistent experiences for
-  Shopify merchants.
+- **Polaris Web Components**: For building high quality, consistent experiences
+  for Shopify merchants (loaded via Shopify CDN).
 - **Tailwind CSS**: For fast, flexible styling and design.
 - **Docker (Optional)**: For setting up the postgres database for local
   development.

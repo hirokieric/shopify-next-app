@@ -10,7 +10,9 @@ const nextConfig = {
     NEXT_PUBLIC_HOST: process.env.HOST,
     NEXT_PUBLIC_SHOPIFY_API_KEY: process.env.SHOPIFY_API_KEY,
   },
-  allowedDevOrigins: [process.env.HOST],
+  // `HOST` が未設定の状態（Shopify CLI を使わずに起動する等）でも
+  // Next.js の設定バリデーションで落ちないようにする。
+  allowedDevOrigins: process.env.HOST ? [process.env.HOST] : [],
 };
 
 module.exports = nextConfig;

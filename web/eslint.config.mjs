@@ -22,6 +22,7 @@ const config = [
       ".turbo/**",
       "coverage/**",
       "prisma/migrations/**",
+      "generated/**",
       "lib/gql/**",
       "types/admin.generated.d.ts",
       ".next/types/**",

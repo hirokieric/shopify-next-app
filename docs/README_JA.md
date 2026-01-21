@@ -9,7 +9,7 @@
 - **Tanstack Query**: Shopify GraphQL API との連携
 - **App Bridge v4**: フロントエンドでの API リクエストの認証
 - **Shopify API ライブラリ**: サーバーレスバックエンドでの OAuth 管理
-- **Polaris React**: Shopify マーチャント向けの高品質で一貫性のある体験を構築
+- **Polaris Web Components**: Shopify マーチャント向けの高品質で一貫性のある体験を構築（Shopify CDN から読み込み）
 - **Tailwind CSS**: 高速で柔軟なスタイリングとデザイン
 - **Docker（オプション）**: ローカル開発用の PostgreSQL データベースのセットアップ
 - **GraphQL Codegen**: GraphQL クエリとミューテーションの型生成

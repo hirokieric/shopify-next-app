@@ -124,17 +124,16 @@ await storeSession(session);
 
 #### このテンプレート
 ```typescript
-<AppProvider>
-  <TanstackProvider>
-    <SessionProvider>
-      {children}
-    </SessionProvider>
-  </TanstackProvider>
-</AppProvider>
+<TanstackProvider>
+  <SessionProvider>
+    {children}
+  </SessionProvider>
+</TanstackProvider>
 ```
 
 - シンプルなプロバイダー構成
 - SessionProvider で自動的にトークンを保存
+- Polaris の UI は **Polaris Web Components（`<s-*>`）** を使用し、`layout.tsx` で `polaris.js` を読み込みます
 
 #### 公式テンプレート
 - より複雑なプロバイダー構成の場合がある
@@ -151,7 +150,7 @@ await storeSession(session);
 | Next.js | 15.5.4 | フレームワーク |
 | React | 19.2.0 | UI ライブラリ |
 | TypeScript | 5.9.3 | 型安全性 |
-| Polaris | 13.9.5 | UI コンポーネント |
+| Polaris Web Components | Shopify CDN | UI コンポーネント（`<s-*>`） |
 | Tailwind CSS | 4.1.14 | スタイリング |
 | Tanstack Query | 5.90.2 | データフェッチング |
 | App Bridge React | 4.2.5 | Shopify 統合 |

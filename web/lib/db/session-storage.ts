@@ -1,5 +1,5 @@
-import { Session } from "@prisma/client";
 import { Session as ShopifySession } from "@shopify/shopify-api";
+import type { Session as DbSession } from "@/generated/prisma/client";
 import { SessionNotFoundError } from "@/lib/errors/session-errors";
 import prisma from "./prisma-connect";
 const apiKey = process.env.SHOPIFY_API_KEY || "";
@@ -120,7 +120,7 @@ export async function findSessionsByShop(shop: string) {
   return sessions.map((session) => generateShopifySessionFromDB(session));
 }
 
-function generateShopifySessionFromDB(session: Session) {
+function generateShopifySessionFromDB(session: DbSession) {
   return new ShopifySession({
     id: session.id,
     shop: session.shop,

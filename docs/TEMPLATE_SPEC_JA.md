@@ -42,7 +42,7 @@
 | フロントエンド | Next.js | 15.5.9 | App Router フレームワーク |
 | フロントエンド | React | 19.2.0 | UI ライブラリ |
 | フロントエンド | TypeScript | 5.9.3 | 型安全性 |
-| フロントエンド | Polaris | 13.9.5 | Shopify UI コンポーネント |
+| フロントエンド | Polaris Web Components | Shopify CDN | Shopify UI コンポーネント（`<s-*>`） |
 | フロントエンド | Tailwind CSS | 4.1.14 | スタイリング |
 | データフェッチング | Tanstack Query | 5.90.2 | GraphQL クエリ管理 |
 | Shopify 統合 | App Bridge React | 4.2.5 | 埋め込みアプリ認証 |
@@ -84,11 +84,11 @@ ark-shopify-app/
 ```
 web/
 ├── app/                    # Next.js App Router ページ・ルート
-│   ├── layout.tsx          # ルートレイアウト（App Bridge スクリプト読み込み）
+│   ├── layout.tsx          # ルートレイアウト（App Bridge / Polaris Web Components スクリプト読み込み）
 │   ├── page.tsx            # トップページ
 │   ├── actions.ts          # サーバーアクション（認証・Webhook 登録）
 │   ├── providers/          # React プロバイダー
-│   │   ├── providers.tsx   # プロバイダー統合（AppProvider, Tanstack, Session）
+│   │   ├── providers.tsx   # プロバイダー統合（Tanstack, Session）
 │   │   ├── session-provider.tsx  # セッショントークン取得・保存
 │   │   └── tanstack-provider.tsx # Tanstack Query プロバイダー
 │   ├── api/                # API ルート
