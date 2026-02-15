@@ -12,15 +12,14 @@
     "format:write": "prettier . --write",
     "migrate": "prisma migrate dev",
     "postinstall": "prisma generate",
-    "graphql-codegen": "graphql-codegen --config codegen.ts"
+    "graphql-codegen": "graphql-codegen --config codegen.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@graphql-codegen/cli": "^5.0.7",
-    "@graphql-codegen/client-preset": "^4.8.3",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
-    "@shopify/api-codegen-preset": "^1.2.0",
     "@shopify/app-bridge-react": "^4.2.5",
     "@shopify/shopify-api": "^12.0.0",
     "@tanstack/react-query": "^5.90.2",
@@ -32,6 +31,9 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/client-preset": "^4.8.3",
+    "@shopify/api-codegen-preset": "^1.2.0",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "^22.18.8",
     "@types/react": "^19.2.2",
@@ -46,7 +48,8 @@
     "prettier": "^3.6.2",
     "prisma": "7.2.0",
     "tailwindcss": "^4.1.14",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
   },
   "author": "ozzyonfire",
   "keywords": [

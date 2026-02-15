@@ -1,6 +1,7 @@
 import "@shopify/shopify-api/adapters/web-api";
-import { shopifyApi, ApiVersion, LogSeverity } from "@shopify/shopify-api";
+import { shopifyApi, LogSeverity } from "@shopify/shopify-api";
 import { validateEnvVariables } from "@/lib/env-validation";
+import { SHOPIFY_API_VERSION } from "./constants";
 
 // 環境変数を検証
 try {
@@ -15,12 +16,6 @@ const apiSecretKey = process.env.SHOPIFY_API_SECRET!;
 const hostName = process.env.HOST!.replace(/https?:\/\//, "");
 const scopes = process.env.SCOPES?.split(",") || ["write_products"];
 
-if (!apiKey || !apiSecretKey || !hostName) {
-  throw new Error(
-    "SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST は必須の環境変数です",
-  );
-}
-
 const shopify = shopifyApi({
   apiKey,
   apiSecretKey,
@@ -28,7 +23,7 @@ const shopify = shopifyApi({
   hostName,
   hostScheme: "https",
   isEmbeddedApp: true,
-  apiVersion: ApiVersion.October25,
+  apiVersion: SHOPIFY_API_VERSION,
   logger: {
     level:
       process.env.NODE_ENV === "development"

@@ -5,12 +5,9 @@ import {
   ScopeMismatchError,
   SessionNotFoundError,
 } from "@/lib/errors/session-errors";
+import type { APIErrorResponse } from "@/lib/types/api";
 
-export type APIErrorResponse = {
-  status: "error";
-  message: string;
-  code?: string;
-};
+export type { APIErrorResponse };
 
 /**
  * エラーを適切な HTTP ステータスコードとレスポンスに変換

@@ -12,6 +12,7 @@ datasource db {
 }
 
 model Session {
+  // Shopify API が生成する session ID を使用するため、@default(uuid()) はフォールバック用
   id               String            @id @default(uuid())
   accessToken      String?
   expires          DateTime?
@@ -23,6 +24,9 @@ model Session {
   onlineAccessInfo OnlineAccessInfo?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+
+  @@index([shop])
+  @@index([shop, apiKey])
 }
 
 model OnlineAccessInfo {

@@ -21,6 +21,9 @@ const GET_PRODUCTS = /* GraphQL */ `
 
 export const getProducts = async (shop: string) => {
   const sessions = await findSessionsByShop(shop);
+  if (sessions.length === 0) {
+    throw new Error(`No sessions found for shop: ${shop}`);
+  }
   const client = new shopify.clients.Graphql({
     session: sessions[0],
   });

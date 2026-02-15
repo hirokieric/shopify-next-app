@@ -133,7 +133,7 @@ export default function Home() {
             <div className="flex justify-end">
               <s-button
                 onClick={async () => {
-                  const res = await fetch("shopify:admin/api/graphql.json", {
+                  const res = await fetch("shopify:admin/api/2025-10/graphql.json", {
                     method: "POST",
                     body: JSON.stringify({
                       query: /* GraphQL */ `
@@ -145,7 +145,9 @@ export default function Home() {
                       `,
                     }),
                   });
-                  const { data: adminData } = await res.json();
+                  const { data: adminData } = (await res.json()) as {
+                    data: { shop: { name: string } };
+                  };
                   console.info("graphql response", adminData);
                 }}
               >

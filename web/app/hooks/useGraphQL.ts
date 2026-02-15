@@ -2,7 +2,9 @@ import request from "graphql-request";
 import { type TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { OperationDefinitionNode } from "graphql";
-const url = `shopify:admin/api/2025-10/graphql.json`;
+import { SHOPIFY_API_VERSION } from "@/lib/shopify/constants";
+
+const url = `shopify:admin/api/${SHOPIFY_API_VERSION}/graphql.json`;
 
 // graphql-request の型定義が Next/TS の推論と噛み合わないことがあるため、
 // TypedDocumentNode + variables を渡す最小の形に揃えたラッパーを用意する。

@@ -25,7 +25,7 @@
   },
   "files": ["./types/env.d.ts", "./types/polaris-web-components.d.ts"],
   "include": [
-    "../next-env.d.ts",
+    "./next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.d.ts",

@@ -2,12 +2,15 @@ import { Session as ShopifySession } from "@shopify/shopify-api";
 import type { Session as DbSession } from "@/generated/prisma/client";
 import { SessionNotFoundError } from "@/lib/errors/session-errors";
 import prisma from "./prisma-connect";
-const apiKey = process.env.SHOPIFY_API_KEY || "";
+
+function getApiKey(): string {
+  return process.env.SHOPIFY_API_KEY || "";
+}
 
 /**
- * Stores the session in the database
- * This could be usedful if we need to do something with the
- * access token later
+ * Stores the session in the database.
+ * This could be useful if we need to do something with the
+ * access token later.
  */
 export async function storeSession(session: ShopifySession) {
   await prisma.session.upsert({
@@ -19,7 +22,7 @@ export async function storeSession(session: ShopifySession) {
       expires: session.expires,
       isOnline: session.isOnline,
       state: session.state,
-      apiKey,
+      apiKey: getApiKey(),
     },
     create: {
       id: session.id,
@@ -29,7 +32,7 @@ export async function storeSession(session: ShopifySession) {
       expires: session.expires,
       isOnline: session.isOnline,
       state: session.state,
-      apiKey,
+      apiKey: getApiKey(),
     },
   });
 
@@ -101,13 +104,13 @@ export async function deleteSessions(ids: string[]) {
 
 export async function cleanUpSession(shop: string, accessToken: string) {
   await prisma.session.deleteMany({
-    where: { shop, accessToken, apiKey },
+    where: { shop, accessToken, apiKey: getApiKey() },
   });
 }
 
 export async function findSessionsByShop(shop: string) {
   const sessions = await prisma.session.findMany({
-    where: { shop, apiKey },
+    where: { shop, apiKey: getApiKey() },
     include: {
       onlineAccessInfo: {
         include: {

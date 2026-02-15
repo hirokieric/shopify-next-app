@@ -9,7 +9,7 @@ export function addHandlers() {
   if (!webhooksInitialized) {
     setupGDPRWebHooks("/api/webhooks");
     shopify.webhooks.addHandlers({
-      ["APP_UNINSTALLED"]: {
+      APP_UNINSTALLED: {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
         callback: async (_topic, shop, _body) => {

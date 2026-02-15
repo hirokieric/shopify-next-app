@@ -23,7 +23,11 @@ export function middleware(request: NextRequest) {
   const urlSearchParams = new URLSearchParams(search);
   const params = Object.fromEntries(urlSearchParams.entries());
 
-  const shop = params.shop || "*.myshopify.com";
+  const rawShop = params.shop;
+  const shop =
+    rawShop && /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/.test(rawShop)
+      ? rawShop
+      : "*.myshopify.com";
 
   const res = NextResponse.next();
   res.headers.set(

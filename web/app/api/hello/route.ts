@@ -1,12 +1,7 @@
 import { handleApiError } from "@/lib/errors/api-error";
 import { verifyRequest } from "@/lib/shopify/verify";
 import { NextResponse } from "next/server";
-
-export type APIResponse<DataType> = {
-  status: "success" | "error";
-  data?: DataType;
-  message?: string;
-};
+import type { APIResponse } from "@/lib/types/api";
 
 type Data = {
   name: string;
