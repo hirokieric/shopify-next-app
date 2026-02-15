@@ -11,6 +11,10 @@ declare namespace NodeJS {
     // データベース
     DATABASE_URL: string;
     DIRECT_DATABASE_URL?: string;
+    DATABASE_POOL_SIZE?: string;
+
+    // ロギング
+    LOG_LEVEL?: string;
 
     // Next.js
     NODE_ENV: "development" | "production" | "test";

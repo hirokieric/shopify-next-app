@@ -1,6 +1,7 @@
 "use server";
 import { registerWebhooks } from "@/lib/shopify/register-webhooks";
 import { handleSessionToken } from "@/lib/shopify/verify";
+import logger from "@/lib/logger";
 
 /**
  * Do the server action and return the status
@@ -26,7 +27,7 @@ export async function doServerAction(sessionIdToken: string): Promise<{
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "予期しないエラーが発生しました";
-    console.error("Server action error:", error);
+    logger.error({ err: error }, "Server action error");
     return {
       status: "error",
       message: errorMessage,
@@ -41,7 +42,7 @@ export async function storeToken(sessionToken: string): Promise<void> {
   try {
     await handleSessionToken(sessionToken, false, true);
   } catch (error) {
-    console.error("Error storing token:", error);
+    logger.error({ err: error }, "Error storing token");
     throw error;
   }
 }
@@ -56,7 +57,7 @@ export async function doWebhookRegistration(
     const { session } = await handleSessionToken(sessionToken);
     await registerWebhooks(session);
   } catch (error) {
-    console.error("Error registering webhooks:", error);
+    logger.error({ err: error }, "Error registering webhooks");
     throw error;
   }
 }

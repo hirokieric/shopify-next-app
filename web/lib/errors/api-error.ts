@@ -6,6 +6,7 @@ import {
   SessionNotFoundError,
 } from "@/lib/errors/session-errors";
 import type { APIErrorResponse } from "@/lib/types/api";
+import logger from "@/lib/logger";
 
 export type { APIErrorResponse };
 
@@ -67,7 +68,7 @@ export function handleApiError(error: unknown): NextResponse<APIErrorResponse> {
   const message = isProduction ? "サーバーエラーが発生しました" : errorMessage;
 
   // エラーログを記録（本番環境でも）
-  console.error("API Error:", error);
+  logger.error({ err: error, code: error instanceof Error ? error.name : "UNKNOWN_ERROR" }, "API error");
 
   return NextResponse.json<APIErrorResponse>(
     {

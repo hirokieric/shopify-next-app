@@ -2,6 +2,7 @@ import { DeliveryMethod, Session } from "@shopify/shopify-api";
 import { setupGDPRWebHooks } from "./gdpr";
 import shopify from "./initialize-context";
 import { AppInstallations } from "../db/app-installations";
+import logger from "@/lib/logger";
 
 let webhooksInitialized = false;
 
@@ -13,20 +14,20 @@ export function addHandlers() {
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/api/webhooks",
         callback: async (_topic, shop, _body) => {
-          console.info("Uninstalled app from shop: " + shop);
+          logger.info({ shop }, "Uninstalled app from shop");
           await AppInstallations.delete(shop);
         },
       },
     });
-    console.info("Added handlers");
+    logger.info("Webhook handlers added");
     webhooksInitialized = true;
   } else {
-    console.info("Handlers already added");
+    logger.debug("Webhook handlers already added");
   }
 }
 
 export async function registerWebhooks(session: Session) {
   addHandlers();
   const responses = await shopify.webhooks.register({ session });
-  console.info("Webhooks added", responses);
+  logger.info({ shop: session.shop, responses }, "Webhooks registered");
 }

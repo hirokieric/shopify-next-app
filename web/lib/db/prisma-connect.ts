@@ -7,7 +7,14 @@ const prismaClientSingleton = () => {
     throw new Error("DATABASE_URL is required to initialize Prisma Client");
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  // サーバーレス環境向けコネクションプール設定
+  const poolSize = parseInt(process.env.DATABASE_POOL_SIZE || "5", 10);
+  const adapter = new PrismaPg({
+    connectionString,
+    pool: {
+      max: poolSize,
+    },
+  });
   return new PrismaClient({ adapter });
 };
 

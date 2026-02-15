@@ -3,11 +3,13 @@ import { shopifyApi, LogSeverity } from "@shopify/shopify-api";
 import { validateEnvVariables } from "@/lib/env-validation";
 import { SHOPIFY_API_VERSION } from "./constants";
 
+import logger from "@/lib/logger";
+
 // 環境変数を検証
 try {
   validateEnvVariables();
 } catch (error) {
-  console.error("環境変数の検証に失敗しました:", error);
+  logger.fatal({ err: error }, "環境変数の検証に失敗しました");
   throw error;
 }
 
