@@ -1,5 +1,9 @@
 import shopify from "@/lib/shopify/initialize-context";
 import { addHandlers } from "@/lib/shopify/register-webhooks";
+import {
+  InvalidHmacError,
+  InvalidWebhookError,
+} from "@shopify/shopify-api";
 import { headers } from "next/headers";
 import logger from "@/lib/logger";
 
@@ -36,13 +40,16 @@ export async function POST(req: Request) {
   } catch (error) {
     logger.error({ err: error }, "Webhook processing error");
 
-    // Shopify は 5xx エラーの場合に再試行するため、一時的なエラーは 500 を返す
-    // 永続的なエラー（バリデーションエラーなど）は 400 を返す
-    const statusCode =
-      error instanceof Error && error.message.includes("validation")
-        ? 400
-        : 500;
+    // SDK の型付きエラーで分類する（文字列マッチングではなく）
+    // InvalidHmacError / InvalidWebhookError → 永続的エラー → 400（再試行不要）
+    // その他 → 一時的エラー → 500（Shopify が再試行する）
+    if (
+      error instanceof InvalidHmacError ||
+      error instanceof InvalidWebhookError
+    ) {
+      return new Response(null, { status: 401 });
+    }
 
-    return new Response(null, { status: statusCode });
+    return new Response(null, { status: 500 });
   }
 }

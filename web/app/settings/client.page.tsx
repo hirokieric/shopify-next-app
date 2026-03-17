@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { saveSettings, type AppSettings } from "./actions";
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -17,6 +17,16 @@ export default function SettingsForm() {
     message: string;
     tone: "default" | "critical";
   } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // タイマーのクリーンアップ
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -35,7 +45,10 @@ export default function SettingsForm() {
       setToast({ message: "An error occurred", tone: "critical" });
     } finally {
       setSaving(false);
-      setTimeout(() => setToast(null), 3000);
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+      toastTimerRef.current = setTimeout(() => setToast(null), 3000);
     }
   }, [app, settings]);
 
@@ -45,8 +58,8 @@ export default function SettingsForm() {
       primaryAction={JSON.stringify({
         content: saving ? "Saving..." : "Save",
         disabled: saving,
-        onAction: "save",
       })}
+      onPrimaryAction={handleSave}
     >
       {toast && (
         <s-banner tone={toast.tone === "critical" ? "critical" : "info"}>

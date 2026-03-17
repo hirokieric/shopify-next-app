@@ -47,8 +47,11 @@ export function useGraphQL<TResult, TVariables extends object>(
   const variablesForRequest = (variables ??
     ({} as Record<string, never>)) as unknown as TVariables;
 
+  // variables をJSON文字列化して安定したキーにする（インラインオブジェクトでの無限refetch防止）
+  const stableVariablesKey = variables ? JSON.stringify(variables) : "{}";
+
   return useQuery({
-    queryKey: [operationName, variables],
+    queryKey: [operationName, stableVariablesKey],
     queryFn: async () => gqlRequest(url, document, variablesForRequest),
   });
 }

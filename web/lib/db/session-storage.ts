@@ -1,23 +1,33 @@
 import { Session as ShopifySession } from "@shopify/shopify-api";
-import type { Session as DbSession } from "@/generated/prisma/client";
+import type {
+  Session as DbSession,
+  OnlineAccessInfo as DbOnlineAccessInfo,
+  AssociatedUser as DbAssociatedUser,
+} from "@/generated/prisma/client";
 import { SessionNotFoundError } from "@/lib/errors/session-errors";
+import { encryptToken, decryptToken } from "@/lib/crypto/token-encryption";
 import prisma from "./prisma-connect";
 
 function getApiKey(): string {
-  return process.env.SHOPIFY_API_KEY || "";
+  const key = process.env.SHOPIFY_API_KEY;
+  if (!key) throw new Error("SHOPIFY_API_KEY is not set");
+  return key;
 }
 
 /**
  * Stores the session in the database.
- * This could be useful if we need to do something with the
- * access token later.
+ * Access tokens are encrypted at rest using AES-256-GCM.
  */
 export async function storeSession(session: ShopifySession) {
+  const encryptedToken = session.accessToken
+    ? encryptToken(session.accessToken)
+    : null;
+
   await prisma.session.upsert({
     where: { id: session.id },
     update: {
       shop: session.shop,
-      accessToken: session.accessToken,
+      accessToken: encryptedToken,
       scope: session.scope,
       expires: session.expires,
       isOnline: session.isOnline,
@@ -27,7 +37,7 @@ export async function storeSession(session: ShopifySession) {
     create: {
       id: session.id,
       shop: session.shop,
-      accessToken: session.accessToken,
+      accessToken: encryptedToken,
       scope: session.scope,
       expires: session.expires,
       isOnline: session.isOnline,
@@ -81,6 +91,13 @@ export async function storeSession(session: ShopifySession) {
 export async function loadSession(id: string) {
   const session = await prisma.session.findUnique({
     where: { id },
+    include: {
+      onlineAccessInfo: {
+        include: {
+          associatedUser: true,
+        },
+      },
+    },
   });
 
   if (session) {
@@ -91,7 +108,8 @@ export async function loadSession(id: string) {
 }
 
 export async function deleteSession(id: string) {
-  await prisma.session.delete({
+  // deleteMany never throws on 0 rows (safe for concurrent uninstall webhooks)
+  await prisma.session.deleteMany({
     where: { id },
   });
 }
@@ -103,8 +121,9 @@ export async function deleteSessions(ids: string[]) {
 }
 
 export async function cleanUpSession(shop: string, accessToken: string) {
+  const encryptedToken = encryptToken(accessToken);
   await prisma.session.deleteMany({
-    where: { shop, accessToken, apiKey: getApiKey() },
+    where: { shop, accessToken: encryptedToken, apiKey: getApiKey() },
   });
 }
 
@@ -123,14 +142,60 @@ export async function findSessionsByShop(shop: string) {
   return sessions.map((session) => generateShopifySessionFromDB(session));
 }
 
-function generateShopifySessionFromDB(session: DbSession) {
-  return new ShopifySession({
+type DbSessionWithRelations = DbSession & {
+  onlineAccessInfo?:
+    | (DbOnlineAccessInfo & {
+        associatedUser?: DbAssociatedUser | null;
+      })
+    | null;
+};
+
+function generateShopifySessionFromDB(
+  session: DbSessionWithRelations,
+): ShopifySession {
+  const decryptedToken = session.accessToken
+    ? decryptToken(session.accessToken)
+    : undefined;
+
+  const shopifySession = new ShopifySession({
     id: session.id,
     shop: session.shop,
-    accessToken: session.accessToken || undefined,
+    accessToken: decryptedToken,
     scope: session.scope || undefined,
     state: session.state,
     isOnline: session.isOnline,
     expires: session.expires || undefined,
   });
+
+  // onlineAccessInfo を復元
+  if (session.onlineAccessInfo) {
+    const oai = session.onlineAccessInfo;
+    shopifySession.onlineAccessInfo = {
+      expires_in: oai.expiresIn,
+      associated_user_scope: oai.associatedUserScope,
+      associated_user: oai.associatedUser
+        ? {
+            id: Number(oai.associatedUser.userId),
+            first_name: oai.associatedUser.firstName,
+            last_name: oai.associatedUser.lastName,
+            email: oai.associatedUser.email,
+            email_verified: oai.associatedUser.emailVerified,
+            account_owner: oai.associatedUser.accountOwner,
+            locale: oai.associatedUser.locale,
+            collaborator: oai.associatedUser.collaborator,
+          }
+        : {
+            id: 0,
+            first_name: "",
+            last_name: "",
+            email: "",
+            email_verified: false,
+            account_owner: false,
+            locale: "",
+            collaborator: false,
+          },
+    };
+  }
+
+  return shopifySession;
 }

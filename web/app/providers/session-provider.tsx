@@ -40,8 +40,14 @@ export default function SessionProvider({
       const token = await app.idToken();
 
       await Promise.all([
-        withRetry(() => storeToken(token)),
-        withRetry(() => doWebhookRegistration(token)),
+        withRetry(async () => {
+          const result = await storeToken(token);
+          if (result.status === "error") throw new Error(result.message);
+        }),
+        withRetry(async () => {
+          const result = await doWebhookRegistration(token);
+          if (result.status === "error") throw new Error(result.message);
+        }),
       ]);
     } catch (err) {
       const message =

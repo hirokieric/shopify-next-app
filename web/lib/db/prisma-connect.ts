@@ -8,7 +8,9 @@ const prismaClientSingleton = () => {
   }
 
   // サーバーレス環境向けコネクションプール設定
-  const poolSize = parseInt(process.env.DATABASE_POOL_SIZE || "5", 10);
+  const rawPoolSize = parseInt(process.env.DATABASE_POOL_SIZE ?? "5", 10);
+  const poolSize =
+    Number.isFinite(rawPoolSize) && rawPoolSize > 0 ? rawPoolSize : 5;
   const adapter = new PrismaPg({
     connectionString,
     pool: {

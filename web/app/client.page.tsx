@@ -3,7 +3,7 @@
 import { graphql } from "@/lib/gql";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { doServerAction } from "./actions";
 import { useGraphQL } from "./hooks/useGraphQL";
 
@@ -22,9 +22,11 @@ const GET_SHOP = graphql(`
 
 export default function Home() {
   const [data, setData] = useState<Data | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [serverActionResult, setServerActionResult] = useState<{
     status: "success" | "error";
   }>();
+  const [appBridgeResult, setAppBridgeResult] = useState<string | null>(null);
 
   // useGraphQL is a hook that uses Tanstack Query to query Shopify GraphQL, everything is typed!
   const {
@@ -35,17 +37,43 @@ export default function Home() {
 
   const app = useAppBridge();
 
-  const handleGetAPIRequest = async () => {
+  const handleGetAPIRequest = useCallback(async () => {
     try {
+      setApiError(null);
       // global fetch has tokens automatically added
       // https://shopify.dev/docs/api/app-bridge-library/apis/resource-fetching
       const response = await fetch("/api/hello");
       const result = (await response.json()) as { data: Data };
       setData(result.data);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setApiError("API request failed. Please try again.");
     }
-  };
+  }, []);
+
+  const handleServerAction = useCallback(async () => {
+    const token = await app.idToken();
+    const response = await doServerAction(token);
+    setServerActionResult(response);
+  }, [app]);
+
+  const handleAppBridgeQuery = useCallback(async () => {
+    const res = await fetch("shopify:admin/api/2025-10/graphql.json", {
+      method: "POST",
+      body: JSON.stringify({
+        query: /* GraphQL */ `
+          query {
+            shop {
+              name
+            }
+          }
+        `,
+      }),
+    });
+    const { data: adminData } = (await res.json()) as {
+      data: { shop: { name: string } };
+    };
+    setAppBridgeResult(adminData.shop.name);
+  }, []);
 
   return (
     <s-page title="Home">
@@ -70,6 +98,11 @@ export default function Home() {
                 {data.name} is {data.height} tall.
               </s-text>
             )}
+            {apiError && (
+              <s-banner tone="critical">
+                <p>{apiError}</p>
+              </s-banner>
+            )}
             <div className="flex justify-end">
               <s-button onClick={handleGetAPIRequest}>Call API</s-button>
             </div>
@@ -92,15 +125,7 @@ export default function Home() {
               <s-text as="p">Server action failed.</s-text>
             )}
             <div className="flex justify-end">
-              <s-button
-                onClick={async () => {
-                  const token = await app.idToken();
-                  const response = await doServerAction(token);
-                  setServerActionResult(response);
-                }}
-              >
-                Server action
-              </s-button>
+              <s-button onClick={handleServerAction}>Server action</s-button>
             </div>
           </div>
         </s-card>
@@ -130,28 +155,14 @@ export default function Home() {
               automatically uses an authenticated graphql route, no need to add
               tokens.
             </s-text>
+            {appBridgeResult && (
+              <s-text as="p" variant="bodyMd">
+                Shop name: {appBridgeResult}
+              </s-text>
+            )}
             <div className="flex justify-end">
-              <s-button
-                onClick={async () => {
-                  const res = await fetch("shopify:admin/api/2025-10/graphql.json", {
-                    method: "POST",
-                    body: JSON.stringify({
-                      query: /* GraphQL */ `
-                        query {
-                          shop {
-                            name
-                          }
-                        }
-                      `,
-                    }),
-                  });
-                  const { data: adminData } = (await res.json()) as {
-                    data: { shop: { name: string } };
-                  };
-                  console.info("graphql response", adminData);
-                }}
-              >
-                GraphQL Query - Check the console for the response
+              <s-button onClick={handleAppBridgeQuery}>
+                GraphQL Query
               </s-button>
             </div>
           </div>

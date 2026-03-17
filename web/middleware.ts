@@ -49,8 +49,8 @@ export function middleware(request: NextRequest) {
   // リファラー情報の漏洩を最小限に
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  // クリックジャッキング防止（CSP frame-ancestors の補完）
-  res.headers.set("X-Frame-Options", "DENY");
+  // X-Frame-Options は設定しない（CSP frame-ancestors と競合し、
+  // Shopify 埋め込みアプリの iframe 表示を破壊するため）
 
   // 権限ポリシー（不要な API へのアクセスを制限）
   res.headers.set(

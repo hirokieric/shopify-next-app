@@ -2,6 +2,7 @@
 
 import shopify from "@/lib/shopify/initialize-context";
 import { findSessionsByShop } from "./db/session-storage";
+import { AppNotInstalledError } from "@/lib/errors/session-errors";
 import {
   GetProductsQuery,
   GetProductsQueryVariables,
@@ -21,11 +22,19 @@ const GET_PRODUCTS = /* GraphQL */ `
 
 export const getProducts = async (shop: string) => {
   const sessions = await findSessionsByShop(shop);
-  if (sessions.length === 0) {
-    throw new Error(`No sessions found for shop: ${shop}`);
+
+  // 有効なオフラインセッション（アクセストークンあり＋期限内）を優先選択
+  const validSession = sessions.find(
+    (s) =>
+      s.accessToken && (!s.expires || s.expires > new Date()) && !s.isOnline,
+  );
+
+  if (!validSession) {
+    throw new AppNotInstalledError();
   }
+
   const client = new shopify.clients.Graphql({
-    session: sessions[0],
+    session: validSession,
   });
   const { data, errors } = await client.request<GetProductsQuery>(
     GET_PRODUCTS,

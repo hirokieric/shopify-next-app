@@ -16,10 +16,13 @@ export default defineConfig({
   datasource: {
     // Prisma 7 では `schema.prisma` に url を書けないため、ここで環境変数から渡す。
     // `DIRECT_DATABASE_URL` は任意（未設定でもOK）にしておく。
-    url: process.env.DATABASE_URL ?? "",
+    url: (() => {
+      const url = process.env.DATABASE_URL;
+      if (!url) throw new Error("DATABASE_URL is required for Prisma");
+      return url;
+    })(),
     ...(process.env.DIRECT_DATABASE_URL
       ? { directUrl: process.env.DIRECT_DATABASE_URL }
       : {}),
   },
 });
-

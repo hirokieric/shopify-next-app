@@ -1,6 +1,7 @@
 import { storeSession } from "@/lib/db/session-storage";
 import shopify from "@/lib/shopify/initialize-context";
 import { RequestedTokenType, Session } from "@shopify/shopify-api";
+import { SessionNotFoundError } from "@/lib/errors/session-errors";
 export {
   AppNotInstalledError,
   ExpiredTokenError,
@@ -12,12 +13,18 @@ export async function verifyRequest(
   req: Request,
   isOnline: boolean,
 ): Promise<{ shop: string; session: Session }> {
-  const bearerPresent = req.headers.get("authorization")?.startsWith("Bearer ");
-  const sessionToken = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!bearerPresent || !sessionToken) {
-    throw new Error("No bearer or session token present");
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!authHeader.startsWith("Bearer ")) {
+    throw new SessionNotFoundError();
   }
-  return handleSessionToken(sessionToken, isOnline);
+
+  const sessionToken = authHeader.slice(7).trim();
+  if (!sessionToken || sessionToken.split(".").length !== 3) {
+    throw new SessionNotFoundError();
+  }
+
+  // セッションを保存して毎回トークン交換を避ける
+  return handleSessionToken(sessionToken, isOnline, true);
 }
 
 /**
@@ -55,15 +62,16 @@ export async function tokenExchange({
  * @description Do all the necessary steps, to validate the session token and refresh it if it needs to.
  * @param sessionToken The session token from the request headers or directly sent by the client
  * @param online
+ * @param store Whether to persist the session. Defaults to true.
  * @returns The session object
  */
 export async function handleSessionToken(
   sessionToken: string,
   online?: boolean,
-  store?: boolean,
+  store: boolean = true,
 ): Promise<{ shop: string; session: Session }> {
   const payload = await shopify.session.decodeSessionToken(sessionToken);
   const shop = payload.dest.replace("https://", "");
   const session = await tokenExchange({ shop, sessionToken, online, store });
-  return { shop, session };
+  return { shop: session.shop, session };
 }
