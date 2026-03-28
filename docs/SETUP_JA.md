@@ -242,7 +242,7 @@ SHOPIFY_APP_URL=https://your-app-url.trycloudflare.com
 APP_NAME=your-app-name
 SHOPIFY_API_KEY=your_api_key
 SHOPIFY_API_SCOPES=read_products,write_products
-SHOPIFY_API_VERSION=2025-10
+SHOPIFY_API_VERSION=2026-01
 
 # オプション項目
 SHOPIFY_DEV_STORE_URL=your-dev-store.myshopify.com
@@ -254,7 +254,7 @@ SHOPIFY_DEV_STORE_URL=your-dev-store.myshopify.com
 - `APP_NAME`: アプリ名
 - `SHOPIFY_API_KEY`: Shopify API キー（`client_id` として使用されます）
 - `SHOPIFY_API_SCOPES`: 必要なスコープ（カンマ区切り）
-- `SHOPIFY_API_VERSION`: Webhook の API バージョン（例: `2025-10`）
+- `SHOPIFY_API_VERSION`: Webhook の API バージョン（例: `2026-01`）
 - `SHOPIFY_DEV_STORE_URL`: 開発用ストアのURL（オプション）
 
 ### TOML ファイルの生成
@@ -348,13 +348,14 @@ pnpm run graphql-codegen
 この場合は **プロジェクト内で参照している Admin API バージョンを最新版（または有効なバージョン）へ揃える**必要があります。
 
 **更新箇所（例）:**
+- `web/lib/shopify/constants.ts`: `SHOPIFY_API_VERSION`（一元管理の定数）
 - `web/codegen.ts`: `https://shopify.dev/admin-graphql-direct-proxy/<API_VERSION>`
 - `.graphqlrc.yml`: `schema: "https://shopify.dev/admin-graphql-direct-proxy/<API_VERSION>"`
-- `web/app/hooks/useGraphQL.ts`: `shopify:admin/api/<API_VERSION>/graphql.json`
 - `shopify.app.toml`: `[webhooks].api_version`
+- `shopify.app.app-next-vercel.toml`: `[webhooks].api_version`
 
 **揃える基準:**
-- アプリ本体の API バージョンは `web/lib/shopify/initialize-context.ts` の `apiVersion`（例: `ApiVersion.October25`）に合わせてください。
+- API バージョンの基準値は `web/lib/shopify/constants.ts` の `SHOPIFY_API_VERSION`（例: `ApiVersion.January26`）です。
 
 更新後に、もう一度 `pnpm run graphql-codegen` を実行してください。
 
@@ -586,7 +587,7 @@ SHOPIFY_APP_URL=https://<あなたのドメイン>
 APP_NAME=your-app-name
 SHOPIFY_API_KEY=your_api_key
 SHOPIFY_API_SCOPES=read_products,write_products
-SHOPIFY_API_VERSION=2025-10
+SHOPIFY_API_VERSION=2026-01
 SHOPIFY_DEV_STORE_URL=your-dev-store.myshopify.com  # オプション
 ```
 

@@ -348,7 +348,7 @@ pnpm -C web graphql-codegen
 
 - **入力**: `app/`, `components/`, `hooks/`, `lib/` 内の `graphql()` タグ付きクエリ
 - **出力**: `lib/gql/` (クライアントプリセット) と `types/admin.generated.d.ts` (Shopify API 型)
-- **スキーマ**: `https://shopify.dev/admin-graphql-direct-proxy/2025-10`
+- **スキーマ**: `https://shopify.dev/admin-graphql-direct-proxy/2026-01`
 
 クライアントサイドでは `useGraphQL` フックで型安全にクエリを実行できます:
 

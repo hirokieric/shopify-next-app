@@ -1,6 +1,7 @@
 "use client";
 
 import { graphql } from "@/lib/gql";
+import { SHOPIFY_API_VERSION } from "@/lib/shopify/constants";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
@@ -57,18 +58,21 @@ export default function Home() {
   }, [app]);
 
   const handleAppBridgeQuery = useCallback(async () => {
-    const res = await fetch("shopify:admin/api/2025-10/graphql.json", {
-      method: "POST",
-      body: JSON.stringify({
-        query: /* GraphQL */ `
-          query {
-            shop {
-              name
+    const res = await fetch(
+      `shopify:admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          query: /* GraphQL */ `
+            query {
+              shop {
+                name
+              }
             }
-          }
-        `,
-      }),
-    });
+          `,
+        }),
+      },
+    );
     const { data: adminData } = (await res.json()) as {
       data: { shop: { name: string } };
     };
@@ -161,9 +165,7 @@ export default function Home() {
               </s-text>
             )}
             <div className="flex justify-end">
-              <s-button onClick={handleAppBridgeQuery}>
-                GraphQL Query
-              </s-button>
+              <s-button onClick={handleAppBridgeQuery}>GraphQL Query</s-button>
             </div>
           </div>
         </s-card>
