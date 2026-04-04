@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AssociatedUser
@@ -241,7 +241,7 @@ export type AssociatedUserGroupByOutputType = {
   _max: AssociatedUserMaxAggregateOutputType | null
 }
 
-type GetAssociatedUserGroupByPayload<T extends AssociatedUserGroupByArgs> = Prisma.PrismaPromise<
+export type GetAssociatedUserGroupByPayload<T extends AssociatedUserGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AssociatedUserGroupByOutputType, T['by']> &
       {
@@ -1348,6 +1348,11 @@ export type AssociatedUserFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Skip the first `n` AssociatedUsers.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AssociatedUsers.
+   */
   distinct?: Prisma.AssociatedUserScalarFieldEnum | Prisma.AssociatedUserScalarFieldEnum[]
 }
 

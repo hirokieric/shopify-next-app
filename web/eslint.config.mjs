@@ -1,16 +1,7 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextConfig from "eslint-config-next/core-web-vitals";
+import prettierConfig from "eslint-config-prettier";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Next の shareable config を flat config で利用するための互換レイヤ
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
 
 const config = [
   {
@@ -29,8 +20,11 @@ const config = [
     ],
   },
 
-  // Next.js 推奨 + prettier で整形衝突を回避
-  ...compat.extends("next/core-web-vitals", "prettier"),
+  // Next.js 推奨（Flat Config ネイティブ対応 v16+）
+  ...nextConfig,
+
+  // prettier で整形衝突を回避
+  prettierConfig,
 
   // 追加ルール（主に TS と運用のため）
   {

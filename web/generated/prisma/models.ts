@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/Session.js'
-export type * from './models/OnlineAccessInfo.js'
-export type * from './models/AssociatedUser.js'
-export type * from './commonInputTypes.js'
+export type * from './models/Session'
+export type * from './models/OnlineAccessInfo'
+export type * from './models/AssociatedUser'
+export type * from './commonInputTypes'

@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model OnlineAccessInfo
@@ -199,7 +199,7 @@ export type OnlineAccessInfoGroupByOutputType = {
   _max: OnlineAccessInfoMaxAggregateOutputType | null
 }
 
-type GetOnlineAccessInfoGroupByPayload<T extends OnlineAccessInfoGroupByArgs> = Prisma.PrismaPromise<
+export type GetOnlineAccessInfoGroupByPayload<T extends OnlineAccessInfoGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<OnlineAccessInfoGroupByOutputType, T['by']> &
       {
@@ -1239,6 +1239,11 @@ export type OnlineAccessInfoFindManyArgs<ExtArgs extends runtime.Types.Extension
    * Skip the first `n` OnlineAccessInfos.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of OnlineAccessInfos.
+   */
   distinct?: Prisma.OnlineAccessInfoScalarFieldEnum | Prisma.OnlineAccessInfoScalarFieldEnum[]
 }
 

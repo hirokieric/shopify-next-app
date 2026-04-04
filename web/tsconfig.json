@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -12,7 +16,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -20,17 +24,25 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     }
   },
-  "files": ["./types/env.d.ts", "./types/polaris-web-components.d.ts"],
+  "files": [
+    "./types/env.d.ts",
+    "./types/polaris-web-components.d.ts"
+  ],
   "include": [
     "./next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.d.ts",
     ".next/types/**/*.ts",
-    "**/*.graphql.ts"
+    "**/*.graphql.ts",
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

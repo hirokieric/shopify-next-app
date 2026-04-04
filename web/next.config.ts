@@ -15,16 +15,8 @@ const nextConfig: NextConfig = {
   // Prisma 7 の生成ファイルが Next.js の webpack バンドルと競合するため、
   // サーバーサイドの外部パッケージとして扱う
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg"],
-  // Prisma 7 の generated client が ESM スタイルの .js 拡張子でインポートするが、
-  // 実際のファイルは .ts であるため、webpack の extensionAlias で .js → .ts を解決する
-  webpack: (config) => {
-    config.resolve = config.resolve || {};
-    config.resolve.extensionAlias = {
-      ...config.resolve.extensionAlias,
-      ".js": [".js", ".ts"],
-    };
-    return config;
-  },
+  // Next.js 16 では Turbopack がデフォルト（空の turbopack 設定で明示的に有効化）
+  turbopack: {},
   // `HOST` が未設定の状態（Shopify CLI を使わずに起動する等）でも
   // Next.js の設定バリデーションで落ちないようにする。
   allowedDevOrigins: process.env.HOST ? [process.env.HOST] : [],

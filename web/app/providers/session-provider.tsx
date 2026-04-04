@@ -1,6 +1,6 @@
 "use client";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { doWebhookRegistration, storeToken } from "../actions";
 
 const MAX_RETRIES = 3;
@@ -23,6 +23,22 @@ async function withRetry(
   }
 }
 
+async function initializeSession(
+  getToken: () => Promise<string>,
+): Promise<void> {
+  const token = await getToken();
+  await Promise.all([
+    withRetry(async () => {
+      const result = await storeToken(token);
+      if (result.status === "error") throw new Error(result.message);
+    }),
+    withRetry(async () => {
+      const result = await doWebhookRegistration(token);
+      if (result.status === "error") throw new Error(result.message);
+    }),
+  ]);
+}
+
 export default function SessionProvider({
   children,
 }: {
@@ -31,36 +47,32 @@ export default function SessionProvider({
   const app = useAppBridge();
   const initialized = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const initSession = useCallback(async () => {
+  useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    try {
-      const token = await app.idToken();
+    let cancelled = false;
 
-      await Promise.all([
-        withRetry(async () => {
-          const result = await storeToken(token);
-          if (result.status === "error") throw new Error(result.message);
-        }),
-        withRetry(async () => {
-          const result = await doWebhookRegistration(token);
-          if (result.status === "error") throw new Error(result.message);
-        }),
-      ]);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Session initialization failed";
-      console.error("SessionProvider error:", message);
-      setError(message);
-      initialized.current = false;
-    }
-  }, [app]);
+    initializeSession(() => app.idToken()).then(
+      () => {
+        // 成功時は何もしない
+      },
+      (err: unknown) => {
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : "Session initialization failed";
+        console.error("SessionProvider error:", message);
+        setError(message);
+        initialized.current = false;
+      },
+    );
 
-  useEffect(() => {
-    initSession();
-  }, [initSession]);
+    return () => {
+      cancelled = true;
+    };
+  }, [app, retryCount]);
 
   if (error) {
     return (
@@ -69,7 +81,8 @@ export default function SessionProvider({
           tone="critical"
           onDismiss={() => {
             setError(null);
-            initSession();
+            initialized.current = false;
+            setRetryCount((c) => c + 1);
           }}
         >
           <p>Failed to initialize session: {error}</p>
